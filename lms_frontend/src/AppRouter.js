@@ -17,6 +17,9 @@ import EmployeesListPage from './pages/admin/employees/EmployeesListPage';
 import EmployeeFormPage from './pages/admin/employees/EmployeeFormPage';
 import LessonsListPage from './pages/admin/lessons/LessonsListPage';
 import LessonFormPage from './pages/admin/lessons/LessonFormPage';
+import AssignmentsPage from './pages/hr/AssignmentsPage';
+import AssignmentFormPage from './pages/hr/AssignmentFormPage';
+import ProgressPage from './pages/hr/ProgressPage';
 
 /**
  * PUBLIC_INTERFACE
@@ -109,6 +112,38 @@ export default function AppRouter() {
                   element={
                     <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
                       <HRDashboard />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/hr/assignments"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
+                      <AssignmentsPage />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/hr/assignments/new"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
+                      <AssignmentFormPage />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/hr/assignments/:id"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
+                      <AssignmentFormPage />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/hr/progress"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
+                      <ProgressPage />
                     </RoleProtectedRoute>
                   }
                 />

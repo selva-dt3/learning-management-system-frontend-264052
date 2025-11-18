@@ -25,7 +25,13 @@ function Navbar() {
           <div className="hidden-mobile" style={{ display: 'flex', gap: 12, marginLeft: 16 }}>
             <NavLink to="/" end className="badge">Home</NavLink>
             <NavLink to="/courses" className="badge">Courses</NavLink>
-            {isHR && <NavLink to="/hr" className="badge">HR</NavLink>}
+            {isHR && (
+              <>
+                <NavLink to="/hr" className="badge">HR</NavLink>
+                <NavLink to="/hr/assignments" className="badge">Assignments</NavLink>
+                <NavLink to="/hr/progress" className="badge">Progress</NavLink>
+              </>
+            )}
             {isAdmin && (
               <>
                 <NavLink to="/admin" className="badge">Admin</NavLink>

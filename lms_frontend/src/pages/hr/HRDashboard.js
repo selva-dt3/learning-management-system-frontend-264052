@@ -46,7 +46,7 @@ export default function HRDashboard() {
       <div className="card" style={{ padding: '1rem' }}>
         <h3 style={{ marginTop: 0 }}>Quick Actions</h3>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <Link to="/hr/assign" className="btn">Assign Lessons</Link>
+          <Link to="/hr/assignments" className="btn">Assign Lessons</Link>
           <Link to="/hr/progress" className="btn btn-secondary">Track Progress</Link>
         </div>
       </div>

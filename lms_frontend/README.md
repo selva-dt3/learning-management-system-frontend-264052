@@ -113,6 +113,60 @@ create table if not exists public.lessons (
   is_published boolean default false,
   created_at timestamp with time zone default now()
 );
+
+-- HR Features: Assignments and Progress
+create table if not exists public.assignments (
+  id uuid primary key default gen_random_uuid(),
+  employee_id uuid not null references public.employees (id) on delete cascade,
+  lesson_id uuid not null references public.lessons (id) on delete cascade,
+  assigned_by uuid default auth.uid(),
+  assigned_at timestamp with time zone default now(),
+  due_date date,
+  status text check (status in ('pending','in_progress','completed','overdue')) default 'pending'
+);
+
+create table if not exists public.progress (
+  id uuid primary key default gen_random_uuid(),
+  employee_id uuid not null references public.employees (id) on delete cascade,
+  lesson_id uuid not null references public.lessons (id) on delete cascade,
+  status text check (status in ('pending','in_progress','completed','overdue')) default 'pending',
+  percent_complete numeric check (percent_complete >= 0 and percent_complete <= 100) default 0,
+  last_activity_at timestamp with time zone default now(),
+  notes text
+);
+
+alter table public.assignments enable row level security;
+alter table public.progress enable row level security;
+
+-- Example RLS Policies (adjust for your setup)
+-- Grant read/write on assignments to users with HR role; others read-own or as permitted.
+-- This example uses a JWT custom claim user_role; you can also join with profiles via policies.
+create policy "Assignments readable to HR"
+on public.assignments
+for select
+to authenticated
+using (auth.jwt() ?->> 'user_role' in ('hr','admin'));
+
+create policy "Assignments writable by HR"
+on public.assignments
+for all
+to authenticated
+using (auth.jwt() ?->> 'user_role' in ('hr','admin'))
+with check (auth.jwt() ?->> 'user_role' in ('hr','admin'));
+
+create policy "Progress readable to HR"
+on public.progress
+for select
+to authenticated
+using (auth.jwt() ?->> 'user_role' in ('hr','admin'));
+
+-- Typically progress is updated by the learner or the system; allow appropriate writes as needed.
+create policy "Progress upsert by HR"
+on public.progress
+for all
+to authenticated
+using (auth.jwt() ?->> 'user_role' in ('hr','admin'))
+with check (auth.jwt() ?->> 'user_role' in ('hr','admin'));
 ```
 
 Row Level Security policies (example — adjust to your needs):
