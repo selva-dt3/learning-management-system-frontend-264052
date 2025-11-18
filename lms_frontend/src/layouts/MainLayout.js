@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
+import { useAuth } from '../lib/auth';
 
 function Navbar() {
+  const { session, role } = useAuth();
+  const isAdmin = role === 'admin';
+  const isHR = role === 'hr' || role === 'admin';
+
   return (
     <nav className="nav-gradient" style={{
       position: 'sticky',
@@ -20,10 +25,12 @@ function Navbar() {
           <div className="hidden-mobile" style={{ display: 'flex', gap: 12, marginLeft: 16 }}>
             <NavLink to="/" end className="badge">Home</NavLink>
             <NavLink to="/courses" className="badge">Courses</NavLink>
+            {isHR && <NavLink to="/hr" className="badge">HR</NavLink>}
+            {isAdmin && <NavLink to="/admin" className="badge">Admin</NavLink>}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <NavLink to="/login" className="badge">Login</NavLink>
+          {!session && <NavLink to="/login" className="badge">Login</NavLink>}
           <NavLink to="/profile" className="badge">Profile</NavLink>
         </div>
       </div>

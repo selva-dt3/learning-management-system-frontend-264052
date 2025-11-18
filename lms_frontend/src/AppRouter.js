@@ -6,11 +6,13 @@ import CoursesPage from './pages/CoursesPage';
 import CourseDetailsPage from './pages/CourseDetailsPage';
 import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/LoginPage';
-import { ProtectedRoute, AuthProvider } from './lib/auth';
+import { ProtectedRoute, AuthProvider, RoleProtectedRoute } from './lib/auth';
 import { ToastProvider } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { injectThemeCSSVariables } from './styles/theme';
 import './styles/global.css';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import HRDashboard from './pages/hr/HRDashboard';
 
 /**
  * PUBLIC_INTERFACE
@@ -32,12 +34,30 @@ export default function AppRouter() {
                 <Route path="/courses" element={<CoursesPage />} />
                 <Route path="/courses/:id" element={<CourseDetailsPage />} />
                 <Route path="/login" element={<LoginPage />} />
+
                 <Route
                   path="/profile"
                   element={
                     <ProtectedRoute>
                       <ProfilePage />
                     </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/admin"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['admin']}>
+                      <AdminDashboard />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/hr"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
+                      <HRDashboard />
+                    </RoleProtectedRoute>
                   }
                 />
               </Routes>
