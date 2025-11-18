@@ -1,0 +1,123 @@
+/* Global Reset and Base Styles - Ocean Professional */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  color: var(--oc-text);
+  background: var(--oc-bg);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--oc-primary);
+  text-decoration: none;
+  transition: var(--oc-transition);
+}
+
+a:hover {
+  opacity: 0.9;
+}
+
+button {
+  font: inherit;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.card {
+  background: var(--oc-surface);
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius-lg);
+  box-shadow: var(--oc-shadow-sm);
+  transition: var(--oc-transition);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--oc-shadow-md);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--oc-primary);
+  color: white;
+  border: none;
+  border-radius: var(--oc-radius-md);
+  padding: 0.6rem 1rem;
+  box-shadow: var(--oc-shadow-sm);
+  transition: var(--oc-transition);
+  cursor: pointer;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--oc-shadow-md);
+}
+
+.btn-secondary {
+  background: var(--oc-secondary);
+  color: #1f2937;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid var(--oc-border);
+  border-radius: var(--oc-radius-md);
+  padding: 0.6rem 0.8rem;
+  background: white;
+  transition: var(--oc-transition);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--oc-primary);
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.15);
+}
+
+.nav-gradient {
+  background: var(--oc-gradient);
+}
+
+.footer {
+  background: var(--oc-gradient);
+  border-top: 1px solid var(--oc-border);
+  color: var(--oc-muted-text);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  border: 1px solid var(--oc-border);
+  background: #ffffff;
+}
+
+.hidden-mobile {
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .hidden-mobile {
+    display: none;
+  }
+}

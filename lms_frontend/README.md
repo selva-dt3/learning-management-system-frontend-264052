@@ -1,82 +1,86 @@
-# Lightweight React Template for KAVIA
+# LMS Frontend (React) — Ocean Professional
 
-This project provides a minimal React template with a clean, modern UI and minimal dependencies.
+A minimal LMS frontend scaffolded with routing, Ocean Professional theme, and Supabase authentication.
 
 ## Features
-
-- **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React
-- **Modern UI**: Clean, responsive design with KAVIA brand styling
-- **Fast**: Minimal dependencies for quick loading times
-- **Simple**: Easy to understand and modify
+- Routing with react-router: `/`, `/courses`, `/courses/:id`, `/profile` (protected), `/login`
+- Ocean Professional theme (modern, subtle shadows, rounded corners, gradients)
+- Supabase auth wiring (email/password), session-aware layout
+- Placeholder pages: Home, Courses (search/filter UI), Course Details, Profile, Login
+- Error Boundary and toast notifications
+- API client placeholder reading `REACT_APP_API_BASE`
 
 ## Getting Started
 
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-### `npm test`
-
-Launches the test runner in interactive watch mode.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-## Customization
-
-### Colors
-
-The main brand colors are defined as CSS variables in `src/App.css`:
-
-```css
-:root {
-  --kavia-orange: #E87A41;
-  --kavia-dark: #1A1A1A;
-  --text-color: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --border-color: rgba(255, 255, 255, 0.1);
-}
+1) Install dependencies:
+```bash
+npm install
 ```
 
-### Components
+2) Configure environment:
+- Copy `.env.example` to `.env`
+- Provide values for:
+  - `REACT_APP_SUPABASE_URL`
+  - `REACT_APP_SUPABASE_KEY`
+- Optionally set `REACT_APP_API_BASE` for future API calls.
 
-This template uses pure HTML/CSS components instead of a UI framework. You can find component styles in `src/App.css`. 
+3) Run the app:
+```bash
+npm start
+```
+Open http://localhost:3000
 
-Common components include:
-- Buttons (`.btn`, `.btn-large`)
-- Container (`.container`)
-- Navigation (`.navbar`)
-- Typography (`.title`, `.subtitle`, `.description`)
+## Supabase Notes
+This app initializes Supabase using environment variables only (no secrets in code). For email/password auth to work, ensure:
+- Email/password auth is enabled in your Supabase project
+- If you implement magic links in the future, use your deployment URL from environment (e.g., `REACT_APP_FRONTEND_URL`) for redirects
 
-## Learn More
+Key files:
+- `src/lib/supabaseClient.js` — Supabase client
+- `src/lib/auth.js` — Auth helpers (signIn, signOut, getSession), AuthProvider/useAuth, ProtectedRoute
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Project Structure
+```
+src/
+  components/
+    ErrorBoundary.js
+    Toast.js
+  layouts/
+    MainLayout.js
+  lib/
+    apiClient.js
+    auth.js
+    supabaseClient.js
+  pages/
+    CourseDetailsPage.js
+    CoursesPage.js
+    HomePage.js
+    LoginPage.js
+    ProfilePage.js
+  styles/
+    global.css
+    theme.js
+  App.js
+  AppRouter.js
+  index.js
+```
 
-### Code Splitting
+## Styling
+- Centralized theme in `src/styles/theme.js` sets CSS variables at runtime.
+- Base global styles in `src/styles/global.css` define utilities (card, btn, input, container, etc).
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Security
+- No secrets are hardcoded; environment-only configuration
+- No sensitive data logged
+- Simple client-side input validation on Login form
 
-### Analyzing the Bundle Size
+## Scripts
+- `npm start` — start development server
+- `npm build` — build production bundle
+- `npm test` — run tests
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```diff
+Important:
+- Ensure .env is not committed.
+- Provide valid Supabase URL and anon/public key.
+```
