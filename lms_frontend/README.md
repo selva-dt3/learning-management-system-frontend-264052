@@ -88,6 +88,60 @@ with check (auth.uid() = id);
 
 For development convenience, the app treats missing roles as `learner`.
 
+### Employees and Lessons Tables
+
+Suggested schema for admin features:
+
+```sql
+create table if not exists public.employees (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  email text unique not null,
+  department text,
+  role text check (role in ('employee','hr','admin')) default 'employee',
+  status text check (status in ('active','inactive')) default 'active',
+  created_at timestamp with time zone default now()
+);
+
+create table if not exists public.lessons (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  category text,
+  difficulty text check (difficulty in ('beginner','intermediate','advanced')) default 'beginner',
+  duration_minutes integer,
+  is_published boolean default false,
+  created_at timestamp with time zone default now()
+);
+```
+
+Row Level Security policies (example — adjust to your needs):
+
+```sql
+alter table public.employees enable row level security;
+alter table public.lessons enable row level security;
+
+-- Example: grant full access to admins (mapped via auth.jwt() role claim or via a secure RPC if desired).
+-- Simplest approach during development: authenticated users can read; only admins can write.
+create policy "Employees read for authenticated"
+on public.employees for select to authenticated using (true);
+
+create policy "Employees write for admins"
+on public.employees for all to authenticated
+using (auth.jwt() ?->> 'user_role' = 'admin')
+with check (auth.jwt() ?->> 'user_role' = 'admin');
+
+create policy "Lessons read for authenticated"
+on public.lessons for select to authenticated using (true);
+
+create policy "Lessons write for admins"
+on public.lessons for all to authenticated
+using (auth.jwt() ?->> 'user_role' = 'admin')
+with check (auth.jwt() ?->> 'user_role' = 'admin');
+```
+
+Note: Ensure your auth JWT includes an appropriate claim (e.g., user_role) or use Supabase Edge Functions/Policies tied to `profiles.role` to gate writes to admins only. Other roles can be read-only or no access as desired.
+
 ### Where Roles Are Resolved
 
 - `src/lib/services/roles.js` — encapsulates role fetching from `profiles` (primary) and `user_metadata.role` (fallback)

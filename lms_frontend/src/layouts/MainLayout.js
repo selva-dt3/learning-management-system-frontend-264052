@@ -26,7 +26,13 @@ function Navbar() {
             <NavLink to="/" end className="badge">Home</NavLink>
             <NavLink to="/courses" className="badge">Courses</NavLink>
             {isHR && <NavLink to="/hr" className="badge">HR</NavLink>}
-            {isAdmin && <NavLink to="/admin" className="badge">Admin</NavLink>}
+            {isAdmin && (
+              <>
+                <NavLink to="/admin" className="badge">Admin</NavLink>
+                <NavLink to="/admin/employees" className="badge">Employees</NavLink>
+                <NavLink to="/admin/lessons" className="badge">Lessons</NavLink>
+              </>
+            )}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

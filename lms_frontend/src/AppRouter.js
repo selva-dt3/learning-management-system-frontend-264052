@@ -13,6 +13,10 @@ import { injectThemeCSSVariables } from './styles/theme';
 import './styles/global.css';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import HRDashboard from './pages/hr/HRDashboard';
+import EmployeesListPage from './pages/admin/employees/EmployeesListPage';
+import EmployeeFormPage from './pages/admin/employees/EmployeeFormPage';
+import LessonsListPage from './pages/admin/lessons/LessonsListPage';
+import LessonFormPage from './pages/admin/lessons/LessonFormPage';
 
 /**
  * PUBLIC_INTERFACE
@@ -49,6 +53,54 @@ export default function AppRouter() {
                   element={
                     <RoleProtectedRoute allowedRoles={['admin']}>
                       <AdminDashboard />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/employees"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['admin']}>
+                      <EmployeesListPage />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/employees/new"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['admin']}>
+                      <EmployeeFormPage />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/employees/:id"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['admin']}>
+                      <EmployeeFormPage />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/lessons"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['admin']}>
+                      <LessonsListPage />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/lessons/new"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['admin']}>
+                      <LessonFormPage />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/lessons/:id"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['admin']}>
+                      <LessonFormPage />
                     </RoleProtectedRoute>
                   }
                 />
