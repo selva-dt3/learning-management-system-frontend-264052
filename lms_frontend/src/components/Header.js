@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth, signOut } from '../lib/auth';
+import { useAuth } from '../lib/auth';
 import { useToast } from './Toast';
 
 /**
@@ -11,18 +11,22 @@ import { useToast } from './Toast';
  * Styling follows Ocean Professional theme variables.
  */
 export default function Header() {
-  const { user, role } = useAuth();
+  const { user, role, signOut } = useAuth();
   const { notify } = useToast();
+  const [signingOut, setSigningOut] = React.useState(false);
 
   // eslint-disable-next-line no-console
   console.debug?.('[Header] user/role', { userId: user?.id, email: user?.email, role });
 
   const onSignOut = async () => {
     try {
+      setSigningOut(true);
       await signOut();
       notify('Signed out', 'success');
     } catch (_e) {
       notify('Unable to sign out', 'error');
+    } finally {
+      setSigningOut(false);
     }
   };
 
@@ -64,7 +68,9 @@ export default function Header() {
           {user && (
             <>
               <span className="badge" aria-label="Signed in email" title={user.email}>{user.email}</span>
-              <button className="btn btn-secondary" onClick={onSignOut}>Sign Out</button>
+              <button className="btn btn-secondary" onClick={onSignOut} disabled={signingOut}>
+                {signingOut ? 'Signing out…' : 'Sign Out'}
+              </button>
             </>
           )}
         </div>

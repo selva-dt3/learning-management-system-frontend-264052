@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useAuth, signOut } from '../lib/auth';
+import { useAuth } from '../lib/auth';
 import { useToast } from '../components/Toast';
 
 // PUBLIC_INTERFACE
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [loading, setLoading] = useState(false);
   const { notify } = useToast();
 

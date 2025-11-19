@@ -56,10 +56,9 @@ This app resolves roles from `public.user_roles` with RLS enabled. Only SELECT i
 - Guards:
   - `ProtectedRoute` requires authentication; redirects to `/auth/login`
   - `RoleProtectedRoute` requires role membership; shows a themed 403 (AccessDenied) when unauthorized
-- Redirects after login:
-  - If user has `admin` → `/admin`
-  - Else if `hr` → `/hr`
-  - Else → `/`
+- Redirects and Sign-out:
+  - After login: If user has `admin` → `/admin`, else if `hr` → `/hr`, else → `/`
+  - Sign-out: Header/Profile sign-out triggers Supabase `auth.signOut()`, immediately clears local auth/roles state in `AuthProvider`, and navigates to `/`. Protected routes react instantly to unauthenticated state.
 - Navigation:
   - Header shows "HR" link when role is hr or admin
   - Header shows "Admin" link when role is admin

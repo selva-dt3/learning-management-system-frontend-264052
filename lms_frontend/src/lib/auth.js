@@ -206,6 +206,31 @@ export function AuthProvider({ children }) {
     };
   }, [refreshSession, resolveRoles, safeNavigate]);
 
+  // Context-managed signOut to clear local state immediately and navigate safely
+  const ctxSignOut = useCallback(async () => {
+    // eslint-disable-next-line no-console
+    console.debug?.('[Auth] signOut:begin');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (_e) {
+      // eslint-disable-next-line no-console
+      console.warn('[Auth] signOut:error');
+      throw _e;
+    } finally {
+      // Clear local auth/roles to ensure guards react instantly
+      setSession(null);
+      setUser(null);
+      setRole('learner');
+      setRoles([]);
+      setLoading(false);
+      setRolesLoading(false);
+      safeNavigate('/', { replace: true });
+      // eslint-disable-next-line no-console
+      console.debug?.('[Auth] signOut:done');
+    }
+  }, [safeNavigate]);
+
   const ctx = {
     user,
     session,
@@ -217,7 +242,7 @@ export function AuthProvider({ children }) {
     // Context methods for UI consumption
     signInWithEmailPassword: signInWithEmail,
     signUpWithEmailPassword: signUpWithEmail,
-    signOut
+    signOut: ctxSignOut
   };
 
   return (
