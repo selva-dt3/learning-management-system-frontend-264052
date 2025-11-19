@@ -15,6 +15,7 @@ import { seedDemoData } from '../../lib/services/seeding';
  *   Persists metadata to lessons table
  * - Admin-only "Seed Demo Data" utility to populate courses, lessons, assignments, and optional progress.
  *   Uses idempotent UPSERTs. Shows actionable errors if schema missing or RLS blocks.
+ * - Quick links to Admin sections including new Courses section.
  */
 export default function AdminDashboard() {
   // eslint-disable-next-line no-console
@@ -288,6 +289,15 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      <div className="card" style={{ padding: '1rem' }}>
+        <h3 style={{ marginTop: 0 }}>Quick Actions</h3>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <Link to="/admin/employees" className="btn">Manage Employees</Link>
+          <Link to="/admin/lessons" className="btn btn-secondary">Manage Lessons</Link>
+          <Link to="/admin/courses" className="btn btn-secondary">Manage Courses</Link>
+        </div>
+      </div>
+
       <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
         <div className="card" style={{ padding: '1rem' }}>
           <div className="badge" style={{ marginBottom: 8 }}>Users</div>
@@ -300,14 +310,6 @@ export default function AdminDashboard() {
           <h3 style={{ marginTop: 0 }}>Published Lessons</h3>
           <div style={{ fontSize: 28, fontWeight: 800 }}>—</div>
           <div style={{ color: 'var(--oc-muted-text)' }}>RLS-friendly metric (placeholder)</div>
-        </div>
-      </div>
-
-      <div className="card" style={{ padding: '1rem' }}>
-        <h3 style={{ marginTop: 0 }}>Quick Actions</h3>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <Link to="/admin/employees" className="btn">Manage Employees</Link>
-          <Link to="/admin/lessons" className="btn btn-secondary">Manage Lessons</Link>
         </div>
       </div>
 
@@ -538,6 +540,7 @@ export default function AdminDashboard() {
                 {creating ? 'Creating…' : 'Create Lesson'}
               </button>
               <Link to="/admin/lessons" className="btn btn-secondary">Go to Lessons</Link>
+              <Link to="/admin/courses" className="btn btn-secondary">Go to Courses</Link>
             </div>
           </div>
         </form>

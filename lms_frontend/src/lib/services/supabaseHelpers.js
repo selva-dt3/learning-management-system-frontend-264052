@@ -97,6 +97,26 @@ export async function ensureTablesHint() {
 
 /**
  * PUBLIC_INTERFACE
+ * Convert PostgREST/Supabase error to a user-friendly string with RLS hints.
+ */
+export function handlePostgrestError(error) {
+  if (!error) return 'Unknown error';
+  const raw = (error.message || error.error_description || String(error)).toLowerCase();
+
+  if (raw.includes('permission denied') || raw.includes('rls') || raw.includes('not authorized')) {
+    return 'Operation blocked by Row Level Security (RLS). In demo, ensure relaxed RLS or check README_RLS_TROUBLESHOOTING.md.';
+  }
+  if (raw.includes('duplicate key') || raw.includes('unique')) {
+    return 'Duplicate detected. Please use a different value.';
+  }
+  if (raw.includes('foreign key')) {
+    return 'Blocked by a related record constraint.';
+  }
+  return error.message || 'An unexpected error occurred';
+}
+
+/**
+ * PUBLIC_INTERFACE
  * findUserIdByEmail
  * Attempts to find auth.users id by email using PostgREST RPC or public table mirror if available.
  * - By default, selects from a likely 'employees' table to map email to an internal user id column if present.

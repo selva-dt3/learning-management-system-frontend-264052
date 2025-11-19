@@ -26,6 +26,7 @@ import AssignmentsPage from './pages/hr/AssignmentsPage';
 import AssignmentFormPage from './pages/hr/AssignmentFormPage';
 import ProgressPage from './pages/hr/ProgressPage';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
+import { adminCourseRoutes } from './pages/admin/courses/routes.register';
 
 /**
  * PUBLIC_INTERFACE
@@ -43,8 +44,7 @@ export default function AppRouter() {
   }, []);
 
   // Define routes using route objects while keeping existing elements/guards.
-  const router = createBrowserRouter(
-    [
+  const baseRoutes = [
       {
         path: '/',
         element: (
@@ -216,6 +216,11 @@ export default function AppRouter() {
           </MainLayout>
         ),
       },
+    ];
+  const router = createBrowserRouter(
+    [
+      ...baseRoutes,
+      ...adminCourseRoutes,
     ],
     {
       // Enable React Router v7 future flags to silence warnings and prep for v7 behavior
