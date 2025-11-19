@@ -102,10 +102,35 @@ export default function AdminDashboard() {
 
   const onCreateLesson = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+
+    // Temporary console diagnostics
+    // eslint-disable-next-line no-console
+    console.debug?.('[AdminDashboard] onCreateLesson:submit', {
+      courseId: form.courseId,
+      title: form.title,
+      contentType: form.contentType,
+      hasFile: !!form.file,
+      linkUrl: form.linkUrl,
+      user: user?.id ? 'authenticated' : 'anonymous',
+    });
+
+    if (!validate()) {
+      // eslint-disable-next-line no-console
+      console.debug?.('[AdminDashboard] onCreateLesson:validate failed', { validation });
+      return;
+    }
 
     try {
       setCreating(true);
+
+      // Guard unauthenticated writes if RLS most likely requires auth
+      if (!user) {
+        notify('Authentication required to create lessons. Please sign in.', 'error');
+        // eslint-disable-next-line no-console
+        console.warn('[AdminDashboard] blocked write: unauthenticated user');
+        return;
+      }
+
       let assetUrl = null;
       let linkUrl = null;
 
@@ -113,9 +138,10 @@ export default function AdminDashboard() {
         linkUrl = String(form.linkUrl || '').trim();
       } else if (form.file instanceof File) {
         const { publicUrl, error: upErr } = await uploadLessonAsset(form.file, `lessons/${form.courseId}`);
+        // eslint-disable-next-line no-console
+        console.debug?.('[AdminDashboard] storage.upload result', { publicUrl, upErr: upErr?.message });
         if (upErr) {
           notify(upErr.message || 'Upload failed', 'error');
-          setCreating(false);
           return;
         }
         assetUrl = publicUrl;
@@ -135,16 +161,34 @@ export default function AdminDashboard() {
         link_url: linkUrl,
         resources: resourcesArray.length ? resourcesArray : null,
         created_by: user?.id || null,
-        created_at: new Date().toISOString()
+        // created_at will be set by DB default if present; send only if needed
       };
 
-      const { error } = await supabase.from('lessons').insert(payload).select().single();
+      // Log payload (non-sensitive only)
+      // eslint-disable-next-line no-console
+      console.debug?.('[AdminDashboard] inserting lesson payload', {
+        ...payload,
+        resources: Array.isArray(payload.resources) ? `[${payload.resources.length}]` : null,
+      });
+
+      const { data: inserted, error } = await supabase.from('lessons').insert(payload).select().maybeSingle();
+
       if (error) {
-        notify('Insert blocked. Ensure RLS policies permit insert and run provided SQL in README.', 'error');
+        // eslint-disable-next-line no-console
+        console.error('[AdminDashboard] Supabase insert error', error);
+        const msg = error?.message || 'Insert failed';
+        // Surface RLS guidance without weakening policies
+        notify(
+          `Create failed: ${msg}. If this is an RLS issue, ensure policies allow authenticated inserts for your role.`,
+          'error'
+        );
         return;
       }
 
-      // Reset form on success
+      // eslint-disable-next-line no-console
+      console.debug?.('[AdminDashboard] insert success', { id: inserted?.id });
+
+      // Reset form on success, give feedback, and optionally trigger refresh by navigating or emitting event.
       setForm({
         courseId: '',
         title: '',
@@ -156,10 +200,17 @@ export default function AdminDashboard() {
       });
       setValidation({});
       notify('Lesson created', 'success');
-    } catch (_e) {
-      notify('Unable to create lesson. Verify Supabase tables and storage.', 'error');
+
+      // If a lessons list is mounted elsewhere, you may navigate or trigger a signal.
+      // For now, provide a friendly nudge via toast.
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[AdminDashboard] onCreateLesson unexpected error', err);
+      notify('Unable to create lesson. Verify Supabase tables, RLS, and storage configuration.', 'error');
     } finally {
       setCreating(false);
+      // eslint-disable-next-line no-console
+      console.debug?.('[AdminDashboard] onCreateLesson:done');
     }
   };
 
@@ -380,6 +431,11 @@ export default function AdminDashboard() {
         </div>
 
         <form onSubmit={onCreateLesson} noValidate>
+          {!user && (
+            <div style={{ marginBottom: 8, color: '#7c2d12', background: '#fffbeb', border: '1px solid #fde68a', padding: '8px 12px', borderRadius: 8 }}>
+              You are not signed in. Creating a lesson requires authentication and appropriate Supabase RLS policies.
+            </div>
+          )}
           <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr' }}>
             <div>
               <label htmlFor="courseId" style={{ display: 'block', marginBottom: 6 }}>Course ID</label>

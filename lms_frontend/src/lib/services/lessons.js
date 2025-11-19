@@ -55,10 +55,19 @@ export async function createLesson(payload) {
       duration_minutes: Number.isFinite(Number(payload?.durationMinutes)) ? Number(payload.durationMinutes) : null,
       is_published: Boolean(payload?.isPublished)
     };
+    // eslint-disable-next-line no-console
+    console.debug?.('[lessons.createLesson] inserting', dataToInsert);
+
     const { data, error } = await supabase.from('lessons').insert(dataToInsert).select().single();
-    if (error) return { data: null, error };
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('[lessons.createLesson] insert error', error);
+      return { data: null, error };
+    }
     return { data, error: null };
   } catch (_e) {
+    // eslint-disable-next-line no-console
+    console.error('[lessons.createLesson] unexpected error', _e);
     return { data: null, error: new Error('Unable to create lesson') };
   }
 }

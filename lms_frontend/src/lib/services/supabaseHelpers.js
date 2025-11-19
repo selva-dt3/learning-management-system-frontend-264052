@@ -18,9 +18,11 @@ export async function uploadLessonAsset(file, pathPrefix = 'lessons') {
     // Ensure bucket exists (will fail with 404 if not). We cannot create bucket from anon key; guide user via error.
     const { data: listTest, error: listErr } = await supabase.storage.from('lesson-assets').list('', { limit: 1 });
     if (listErr) {
+      // eslint-disable-next-line no-console
+      console.warn('[uploadLessonAsset] bucket list failed', listErr?.message);
       return {
         publicUrl: null,
-        error: new Error("Storage bucket 'lesson-assets' not found. Please create it in Supabase Storage.")
+        error: new Error("Storage bucket 'lesson-assets' not found or inaccessible. Create it and ensure read access."),
       };
     }
 
@@ -30,12 +32,28 @@ export async function uploadLessonAsset(file, pathPrefix = 'lessons') {
         cacheControl: '3600',
         upsert: false,
       });
+
+    // eslint-disable-next-line no-console
+    console.debug?.('[uploadLessonAsset] upload result', { path, error: error?.message, dataPath: data?.path });
+
     if (error) {
       return { publicUrl: null, error };
     }
     const { data: pub } = supabase.storage.from('lesson-assets').getPublicUrl(data.path);
-    return { publicUrl: pub?.publicUrl || null, error: null };
+
+    // eslint-disable-next-line no-console
+    console.debug?.('[uploadLessonAsset] public URL', { publicUrl: pub?.publicUrl });
+
+    if (!pub?.publicUrl) {
+      return {
+        publicUrl: null,
+        error: new Error("Public URL not available. Make bucket public or use signed URL approach."),
+      };
+    }
+    return { publicUrl: pub.publicUrl, error: null };
   } catch (_e) {
+    // eslint-disable-next-line no-console
+    console.error('[uploadLessonAsset] unexpected error', _e);
     return { publicUrl: null, error: new Error('Upload failed. Verify Storage configuration and policies.') };
   }
 }
