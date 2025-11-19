@@ -191,6 +191,13 @@ export function AuthProvider({ children }) {
       const resolved = await resolveRoles(newUser?.id);
       setRolesLoading(false);
 
+      if (newUser && (resolved?.roles?.length === 0 || resolved?.role === 'learner')) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          '[Auth] Signed in but no elevated roles found. If this is unexpected, verify public.user_roles has a row for this user and RLS allows SELECT for their own rows.',
+        );
+      }
+
       // Post-login redirect by role AFTER roles loaded
       if (event === 'SIGNED_IN') {
         if (resolved.role === 'admin') safeNavigate('/admin', { replace: true });
@@ -290,16 +297,31 @@ export function RoleProtectedRoute({ children, allowedRoles = [] }) {
   const { session, role, loading, rolesLoading } = useAuth();
   const location = useLocation();
 
+  // eslint-disable-next-line no-console
+  console.debug?.('[RouteGuard] check', {
+    path: typeof window !== 'undefined' ? window.location?.pathname : 'n/a',
+    allowedRoles,
+    loading,
+    rolesLoading,
+    hasSession: !!session,
+    role,
+  });
+
   if (loading || rolesLoading) {
     return <Loading label="Checking permissions..." />;
   }
 
   if (!session) {
+    // eslint-disable-next-line no-console
+    console.warn('[RouteGuard] no session, redirecting to /auth/login');
     return <Navigate to="/auth/login" replace state={{ from: location }} />;
   }
 
   const hasAccess = allowedRoles.length === 0 || allowedRoles.includes(role);
+
   if (!hasAccess) {
+    // eslint-disable-next-line no-console
+    console.warn('[RouteGuard] access denied', { role, allowedRoles });
     return <AccessDenied />;
   }
 
