@@ -1,5 +1,9 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+} from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
 import CoursesPage from './pages/CoursesPage';
@@ -27,8 +31,9 @@ import EmployeeDashboard from './pages/employee/EmployeeDashboard';
  * PUBLIC_INTERFACE
  * AppRouter is the main application component setting up routes and providers.
  *
- * Note: BrowserRouter wraps AuthProvider to ensure any useNavigate calls inside AuthProvider
- * run within Router context.
+ * The router uses React Router's Data APIs (createBrowserRouter + RouterProvider)
+ * with v7 future flags enabled to silence deprecation warnings while preserving
+ * current behavior.
  */
 export default function AppRouter() {
   useEffect(() => {
@@ -37,142 +42,221 @@ export default function AppRouter() {
     console.debug?.('[AppRouter] mounted');
   }, []);
 
+  // Define routes using route objects while keeping existing elements/guards.
+  const router = createBrowserRouter(
+    [
+      {
+        path: '/',
+        element: (
+          <MainLayout>
+            <HomePage />
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/courses',
+        element: (
+          <MainLayout>
+            <CoursesPage />
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/courses/:id',
+        element: (
+          <MainLayout>
+            <CourseDetailsPage />
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/auth/login',
+        element: (
+          <MainLayout>
+            <Login />
+          </MainLayout>
+        ),
+      },
+      {
+        // Kept for backward compatibility (component handles redirect UX)
+        path: '/auth/signup',
+        element: (
+          <MainLayout>
+            <Signup />
+          </MainLayout>
+        ),
+      },
+      {
+        // Backward compatibility: /login -> Login
+        path: '/login',
+        element: (
+          <MainLayout>
+            <Login />
+          </MainLayout>
+        ),
+      },
+      {
+        // Defensive: redirect bare /signup to new login route
+        path: '/signup',
+        element: <Navigate to="/auth/login" replace />,
+      },
+      {
+        path: '/profile',
+        element: (
+          <MainLayout>
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/employee',
+        element: (
+          <MainLayout>
+            <ProtectedRoute>
+              <EmployeeDashboard />
+            </ProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/admin',
+        element: (
+          <MainLayout>
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboard />
+            </RoleProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/admin/employees',
+        element: (
+          <MainLayout>
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <EmployeesListPage />
+            </RoleProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/admin/employees/new',
+        element: (
+          <MainLayout>
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <EmployeeFormPage />
+            </RoleProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/admin/employees/:id',
+        element: (
+          <MainLayout>
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <EmployeeFormPage />
+            </RoleProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/admin/lessons',
+        element: (
+          <MainLayout>
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <LessonsListPage />
+            </RoleProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/admin/lessons/new',
+        element: (
+          <MainLayout>
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <LessonFormPage />
+            </RoleProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/admin/lessons/:id',
+        element: (
+          <MainLayout>
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <LessonFormPage />
+            </RoleProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/hr',
+        element: (
+          <MainLayout>
+            <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
+              <HRDashboard />
+            </RoleProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/hr/assignments',
+        element: (
+          <MainLayout>
+            <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
+              <AssignmentsPage />
+            </RoleProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/hr/assignments/new',
+        element: (
+          <MainLayout>
+            <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
+              <AssignmentFormPage />
+            </RoleProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/hr/assignments/:id',
+        element: (
+          <MainLayout>
+            <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
+              <AssignmentFormPage />
+            </RoleProtectedRoute>
+          </MainLayout>
+        ),
+      },
+      {
+        path: '/hr/progress',
+        element: (
+          <MainLayout>
+            <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
+              <ProgressPage />
+            </RoleProtectedRoute>
+          </MainLayout>
+        ),
+      },
+    ],
+    {
+      // Enable React Router v7 future flags to silence warnings and prep for v7 behavior
+      future: {
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      },
+    }
+  );
+
   return (
     <ErrorBoundary>
       <ToastProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <MainLayout>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/courses" element={<CoursesPage />} />
-                <Route path="/courses/:id" element={<CourseDetailsPage />} />
-                <Route path="/auth/login" element={<Login />} />
-                {/* Keep /auth/signup but it redirects to /auth/login via component */}
-                <Route path="/auth/signup" element={<Signup />} />
-                {/* Backward compatibility: keep /login pointing to new page */}
-                <Route path="/login" element={<Login />} />
-                {/* Defensive: if /signup (without /auth) is tried, redirect to login */}
-                <Route path="/signup" element={<Navigate to="/auth/login" replace />} />
-
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/employee"
-                  element={
-                    <ProtectedRoute>
-                      <EmployeeDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/admin"
-                  element={
-                    <RoleProtectedRoute allowedRoles={['admin']}>
-                      <AdminDashboard />
-                    </RoleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/employees"
-                  element={
-                    <RoleProtectedRoute allowedRoles={['admin']}>
-                      <EmployeesListPage />
-                    </RoleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/employees/new"
-                  element={
-                    <RoleProtectedRoute allowedRoles={['admin']}>
-                      <EmployeeFormPage />
-                    </RoleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/employees/:id"
-                  element={
-                    <RoleProtectedRoute allowedRoles={['admin']}>
-                      <EmployeeFormPage />
-                    </RoleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/lessons"
-                  element={
-                    <RoleProtectedRoute allowedRoles={['admin']}>
-                      <LessonsListPage />
-                    </RoleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/lessons/new"
-                  element={
-                    <RoleProtectedRoute allowedRoles={['admin']}>
-                      <LessonFormPage />
-                    </RoleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/lessons/:id"
-                  element={
-                    <RoleProtectedRoute allowedRoles={['admin']}>
-                      <LessonFormPage />
-                    </RoleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/hr"
-                  element={
-                    <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
-                      <HRDashboard />
-                    </RoleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/hr/assignments"
-                  element={
-                    <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
-                      <AssignmentsPage />
-                    </RoleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/hr/assignments/new"
-                  element={
-                    <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
-                      <AssignmentFormPage />
-                    </RoleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/hr/assignments/:id"
-                  element={
-                    <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
-                      <AssignmentFormPage />
-                    </RoleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/hr/progress"
-                  element={
-                    <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
-                      <ProgressPage />
-                    </RoleProtectedRoute>
-                  }
-                />
-              </Routes>
-            </MainLayout>
-          </AuthProvider>
-        </BrowserRouter>
+        {/* Provide Auth context at the top level to preserve existing behavior */}
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </ToastProvider>
     </ErrorBoundary>
   );
