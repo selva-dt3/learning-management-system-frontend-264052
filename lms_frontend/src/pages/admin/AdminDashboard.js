@@ -130,12 +130,22 @@ export default function AdminDashboard() {
   return (
     // Page is guarded by RoleProtectedRoute in AppRouter (admin only).
     <div style={{ display: 'grid', gap: 16 }}>
-      <div className="card" style={{ padding: '1.25rem' }}>
+      <div
+        className="card"
+        style={{
+          padding: '1.25rem',
+          background: 'var(--oc-gradient)',
+          borderColor: 'var(--oc-primary)',
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <div>
+            <div className="badge" style={{ marginBottom: 6, borderColor: 'var(--oc-primary)' }}>
+              Welcome Admin
+            </div>
             <h2 style={{ margin: 0 }}>Admin Dashboard</h2>
             <div style={{ color: 'var(--oc-muted-text)' }}>
-              Welcome {user?.email || ''}. Manage platform settings and content.
+              {user?.email ? `Signed in as ${user.email}. ` : ''}Manage platform settings and content.
             </div>
           </div>
           <div className="badge" title="Your role" style={{ borderColor: 'var(--oc-primary)', color: '#0f172a' }}>

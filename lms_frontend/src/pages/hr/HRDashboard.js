@@ -111,12 +111,22 @@ export default function HRDashboard() {
   return (
     // Page is guarded by RoleProtectedRoute in AppRouter (hr or admin).
     <div style={{ display: 'grid', gap: 16 }}>
-      <div className="card" style={{ padding: '1.25rem' }}>
+      <div
+        className="card"
+        style={{
+          padding: '1.25rem',
+          background: 'var(--oc-gradient)',
+          borderColor: 'var(--oc-secondary)',
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <div>
+            <div className="badge" style={{ marginBottom: 6, borderColor: 'var(--oc-secondary)' }}>
+              Welcome HR
+            </div>
             <h2 style={{ margin: 0 }}>HR Dashboard</h2>
             <div style={{ color: 'var(--oc-muted-text)' }}>
-              Hello {user?.email || ''}. Assign lessons and track team progress.
+              {user?.email ? `Signed in as ${user.email}. ` : ''}Assign lessons and track team progress.
             </div>
           </div>
           <div className="badge" title="Your role" style={{ borderColor: 'var(--oc-secondary)', color: '#7c2d12' }}>
