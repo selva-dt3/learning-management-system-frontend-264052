@@ -29,7 +29,7 @@ import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 
 /**
  * PUBLIC_INTERFACE
- * AppRouter is the main application component setting up routes and providers.
+ * AppRouter sets up the application's routes and providers.
  *
  * The router uses React Router's Data APIs (createBrowserRouter + RouterProvider)
  * with v7 future flags enabled to silence deprecation warnings while preserving
@@ -250,16 +250,18 @@ export default function AppRouter() {
     }
   );
 
+  // eslint-disable-next-line no-console
+  console.log('[RouterInit] React Router v7 flags active', {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+  });
+
   return (
     <ErrorBoundary>
       <ToastProvider>
-        {/* RouterProvider MUST wrap AuthProvider to ensure useNavigate has Router context */}
-        <RouterProvider router={router}>
-          <AuthProvider>
-            {/* Children of AuthProvider are rendered by the route elements within RouterProvider */}
-            {/* MainLayout and route elements are defined in the router above */}
-          </AuthProvider>
-        </RouterProvider>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </ToastProvider>
     </ErrorBoundary>
   );
