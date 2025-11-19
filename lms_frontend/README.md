@@ -18,6 +18,7 @@ New in this update:
 - Admin: Quick-create Lesson form on Admin Dashboard with Supabase Storage uploads (PDF/Video) or external link, resources array, and metadata persisted to lessons table.
 - HR: Assign-by-email form and Performance snapshot embedded in HR Dashboard, using Supabase tables (assignments, progress).
 - Employee: Self dashboard at /employee showing assigned lessons grouped by course, progress bar, and actions to update progress.
+- Admin: Seed Demo Data utility to populate courses, lessons, assignments (and optional progress) in Supabase with idempotent UPSERTs.
 
 Note: The legacy "Categories" sidebar and "Browse Courses" call-to-action on Home have been removed to simplify navigation.
 
@@ -46,6 +47,44 @@ Open http://localhost:3000
 - Required envs:
   - `REACT_APP_SUPABASE_URL` — e.g., `https://YOUR-REF.supabase.co`
   - `REACT_APP_SUPABASE_KEY` — anon/public key from your Supabase project
+
+## Demo Data Seeding (Admin-only)
+
+An Admin-only Seed Demo Data panel is available under Admin Dashboard. It inserts sample courses, lessons, and assignments and is safe to run multiple times (idempotent UPSERT by stable keys).
+
+- Location: Admin Dashboard -> "Seed Demo Data"
+- Inputs:
+  - Optional comma-separated user emails to target for assignments (e.g., `admin@demo.com, hr@demo.com, employee@demo.com`)
+  - Optional "Seed example progress" checkbox
+- Behavior:
+  - Courses are upserted by unique `code`
+  - Lessons are upserted by unique `lesson_key`
+  - Assignments are upserted by unique `assignment_key`
+  - Optional `progress` rows are upserted by unique `progress_key`
+  - If emails are omitted, the tool attempts to discover users in a demo domain (%.demo.com) from a `profiles` or `users` table
+- Output:
+  - Clear toast and inline panel feedback including counts and any warnings/errors
+  - Console logs for further details
+
+If tables are missing or RLS prevents inserts, the UI will show helpful messages and links to `README_RLS_TROUBLESHOOTING.md`.
+
+### Expected Schema (Simplified)
+
+This utility expects the following tables or compatible views/columns:
+- `courses` with at least: `id (uuid/int)`, `code (text unique)`, `title`, `description`, timestamps
+- `lessons` with at least: `lesson_key (text unique)`, `course_code (text)`, `title`, `type (pdf|video|link)`, `link_url`, `asset_url`, `order_index`, timestamps
+- `assignments` with at least: `assignment_key (text unique)`, `user_email (text)`, `course_code (text)`, `title`, `status`, `due_date`, timestamps
+- `progress` (optional) with: `progress_key (text unique)`, `user_email (text)`, `lesson_key (text)`, `status`, `completed_at`, timestamps
+- A user directory table, typically `profiles` or `users` with `email` field, used to resolve IDs if your schema needs `user_id`
+
+If your schema uses foreign keys by `id`, the seeding tool attempts to look up IDs after upserting courses and will include `course_id` and `user_id` where possible. If your schema uses `code/email` directly, the insert remains compatible.
+
+### Troubleshooting Seeding
+
+- If you see missing table errors or permission denied (RLS), visit:
+  - `README_RLS_TROUBLESHOOTING.md` for guidance on enabling insert privileges during development
+- Verify the schema in your Supabase project matches the expected columns above (or adapt the seed utility code to your schema names/columns).
+- Ensure authenticated session has rights to perform UPSERT operations.
 
 ## Sign-in and Roles
 
@@ -284,7 +323,8 @@ create index if not exists assignments_employee_idx on public.assignments(employ
 ## Key Files
 - `src/lib/supabaseClient.js` — Supabase client
 - `src/lib/services/supabaseHelpers.js` — Storage upload helper, schema hints, and email→user id resolver
-- `src/pages/admin/AdminDashboard.js` — Lesson quick-create form with uploads
+- `src/lib/services/seeding.js` — Demo data seeding utility (idempotent UPSERTs)
+- `src/pages/admin/AdminDashboard.js` — Lesson quick-create form with uploads and Seed panel
 - `src/pages/hr/HRDashboard.js` — Assign-by-email and performance snapshot
 
 ## Security
@@ -306,4 +346,5 @@ Important:
 - Provide valid Supabase URL and anon/public key.
 - Ensure user RLS policies allow reading own rows from public.user_roles.
 - Create Storage bucket 'lesson-assets' and run provided table/policy SQL.
+- Use Admin Dashboard → Seed Demo Data to populate sample content safely (idempotent).
 ```

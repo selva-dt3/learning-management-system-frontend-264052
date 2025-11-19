@@ -40,4 +40,17 @@ USING (auth.uid() = user_id);
 - Open browser devtools console and review logs starting with [Auth], [roles], or [RouteGuard].
 - If you see warnings stating "No roles returned. If you expect roles, check RLS/policies...", your user likely lacks a visible row in user_roles or the policy prevents SELECT.
 
+## Seeding Demo Data
+
+If the Admin Dashboard "Seed Demo Data" operation fails with messages like "permission denied" or "RLS prevented inserting into X", temporarily adjust your RLS policies to allow the authenticated role used by the frontend to `insert` and `upsert` on these tables:
+
+- courses
+- lessons
+- assignments
+- progress (if you enable progress seeding)
+
+During development, you can create permissive policies or a dev-only service role for seeding. Revert to least-privilege policies afterward.
+
+Also ensure your schema or views expose a user directory table (`profiles` or `users`) with an `email` field for email-based assignment targeting. If not available, provide explicit emails in the seed form, or adapt the seeding code to match your schema.
+
 Security note: Do not expose service keys in the frontend. Use the anon key only.

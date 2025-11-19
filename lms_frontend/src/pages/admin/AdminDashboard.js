@@ -4,21 +4,22 @@ import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../components/Toast';
 import { uploadLessonAsset, ensureTablesHint } from '../../lib/services/supabaseHelpers';
+import { seedDemoData } from '../../lib/services/seeding';
 
 /**
  * PUBLIC_INTERFACE
  * AdminDashboard
- * Adds quick-create Lesson form aligned with requested schema:
- * - courseId, title, description, contentType [pdf|video|link]
- * - file upload to Supabase Storage (pdf/video) for asset_url
- * - link_url for 'link' type
- * - optional resources array (comma-separated URLs)
- * - Persists metadata to lessons table
- * Provides actionable error messages if tables/bucket missing or RLS blocks inserts.
+ * - Quick-create Lesson form aligned with requested schema:
+ *   courseId, title, description, contentType [pdf|video|link], file/link_url, optional resources
+ *   File uploads to Supabase Storage for asset_url
+ *   Persists metadata to lessons table
+ * - Admin-only "Seed Demo Data" utility to populate courses, lessons, assignments, and optional progress.
+ *   Uses idempotent UPSERTs. Shows actionable errors if schema missing or RLS blocks.
  */
 export default function AdminDashboard() {
   const { user, role } = useAuth();
   const { notify } = useToast();
+  const isAdmin = role === 'admin' || role === 'superadmin';
 
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({
@@ -32,6 +33,12 @@ export default function AdminDashboard() {
   });
   const [validation, setValidation] = useState({});
   const [hints, setHints] = useState([]);
+
+  // Seed panel state
+  const [seedEmails, setSeedEmails] = useState('');
+  const [seedIncludeProgress, setSeedIncludeProgress] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState(null);
 
   useMemo(async () => {
     // eslint-disable-next-line no-console
@@ -104,7 +111,7 @@ export default function AdminDashboard() {
         created_at: new Date().toISOString()
       };
 
-      const { data, error } = await supabase.from('lessons').insert(payload).select().single();
+      const { error } = await supabase.from('lessons').insert(payload).select().single();
       if (error) {
         notify('Insert blocked. Ensure RLS policies permit insert and run provided SQL in README.', 'error');
         return;
@@ -126,6 +133,40 @@ export default function AdminDashboard() {
       notify('Unable to create lesson. Verify Supabase tables and storage.', 'error');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const onSeed = async () => {
+    setSeeding(true);
+    setSeedResult(null);
+    try {
+      const emails = seedEmails
+        .split(',')
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+
+      const res = await seedDemoData({ userEmails: emails, includeProgress: seedIncludeProgress });
+      setSeedResult(res);
+      if (res.errors?.length) {
+        notify(`Seed failed: ${res.errors[0]}`, 'error');
+      } else {
+        notify(
+          `Seeded: courses ${res.coursesInserted}, lessons ${res.lessonsInserted}, assignments ${res.assignmentsInserted}${
+            seedIncludeProgress ? `, progress ${res.progressInserted}` : ''
+          }`,
+          'success'
+        );
+      }
+      if (res.warnings?.length) {
+        // eslint-disable-next-line no-console
+        console.warn('[Seed warnings]', res.warnings);
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[Seed error]', e);
+      notify('Unexpected error during seeding. See console.', 'error');
+    } finally {
+      setSeeding(false);
     }
   };
 
@@ -187,6 +228,116 @@ export default function AdminDashboard() {
           <Link to="/admin/lessons" className="btn btn-secondary">Manage Lessons</Link>
         </div>
       </div>
+
+      {isAdmin && (
+        <div
+          className="card"
+          style={{
+            padding: '1.25rem',
+            borderColor: 'rgba(37,99,235,0.35)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 12 }}>
+            <div>
+              <div className="badge" style={{ marginBottom: 8, borderColor: 'var(--oc-primary)' }}>Developer</div>
+              <h3 style={{ margin: 0 }}>Seed Demo Data</h3>
+              <p style={{ color: 'var(--oc-muted-text)', marginTop: 6 }}>
+                Inserts sample courses, lessons, and assignments. Safe to run multiple times (idempotent).
+              </p>
+            </div>
+            <a
+              href="README_RLS_TROUBLESHOOTING.md"
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-secondary"
+              title="Row Level Security help"
+            >
+              RLS Help
+            </a>
+          </div>
+
+          <div style={{ marginTop: '0.75rem' }}>
+            <label style={{ display: 'block', fontWeight: 600, color: '#111827' }}>
+              Target user emails (comma-separated, optional)
+            </label>
+            <input
+              type="text"
+              className="input"
+              placeholder="admin@demo.com, hr@demo.com, employee@demo.com"
+              value={seedEmails}
+              onChange={(e) => setSeedEmails(e.target.value)}
+            />
+            <small style={{ color: 'var(--oc-muted-text)' }}>
+              If omitted, the tool attempts to find users in a demo domain (%.demo.com) from a profiles/users table.
+            </small>
+          </div>
+
+          <div style={{ marginTop: '0.75rem' }}>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: '#111827' }}>
+              <input
+                type="checkbox"
+                checked={seedIncludeProgress}
+                onChange={(e) => setSeedIncludeProgress(e.target.checked)}
+              />
+              Seed example progress
+            </label>
+          </div>
+
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem' }}>
+            <button
+              onClick={onSeed}
+              disabled={seeding}
+              className="btn"
+              title="Insert demo courses, lessons, assignments"
+            >
+              {seeding ? 'Seeding…' : 'Seed Demo Data'}
+            </button>
+          </div>
+
+          {seedResult && (
+            <div
+              style={{
+                marginTop: '1rem',
+                background: '#f9fafb',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                padding: '0.75rem',
+                color: '#111827',
+              }}
+            >
+              <div><strong>Results</strong></div>
+              <div>Courses: {seedResult.coursesInserted}</div>
+              <div>Lessons: {seedResult.lessonsInserted}</div>
+              <div>Assignments: {seedResult.assignmentsInserted}</div>
+              {seedIncludeProgress && <div>Progress: {seedResult.progressInserted}</div>}
+              {seedResult.warnings?.length > 0 && (
+                <div style={{ marginTop: '0.5rem', color: 'var(--oc-muted-text)' }}>
+                  Warnings:
+                  <ul>
+                    {seedResult.warnings.map((w, idx) => (
+                      <li key={idx}>{w}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {seedResult.errors?.length > 0 && (
+                <div style={{ marginTop: '0.5rem', color: '#EF4444' }}>
+                  Errors:
+                  <ul>
+                    {seedResult.errors.map((w, idx) => (
+                      <li key={idx}>{w}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div style={{ marginTop: '0.75rem', color: 'var(--oc-muted-text)' }}>
+            Note: If tables are missing or RLS prevents inserts, see the README and README_RLS_TROUBLESHOOTING.md.
+          </div>
+        </div>
+      )}
 
       <div className="card" style={{ padding: '1.25rem', maxWidth: 900 }}>
         <div style={{ marginBottom: 8 }}>
