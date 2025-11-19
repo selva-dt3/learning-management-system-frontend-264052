@@ -34,6 +34,8 @@ export default function AdminDashboard() {
   const [hints, setHints] = useState([]);
 
   useMemo(async () => {
+    // eslint-disable-next-line no-console
+    console.debug?.('[AdminDashboard] ensureTablesHint');
     const w = await ensureTablesHint();
     setHints(w);
   }, []);

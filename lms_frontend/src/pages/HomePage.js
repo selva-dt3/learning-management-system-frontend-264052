@@ -11,7 +11,7 @@ export default function HomePage() {
   const { user, role, loading, rolesLoading } = useAuth();
 
   if (loading || rolesLoading) {
-    return <Loading label="Preparing your dashboard..." />;
+    return <Loading label="Preparing your dashboard..." timeoutMs={12000} troubleshooting />;
   }
 
   const isAuthed = !!user;

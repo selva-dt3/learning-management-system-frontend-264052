@@ -171,6 +171,7 @@ export function AuthProvider({ children }) {
       setRole('learner');
       setRoles([]);
     } finally {
+      // ensure flags always settle to avoid infinite loading
       setLoading(false);
       setRolesLoading(false);
       // eslint-disable-next-line no-console
@@ -308,7 +309,7 @@ export function RoleProtectedRoute({ children, allowedRoles = [] }) {
   });
 
   if (loading || rolesLoading) {
-    return <Loading label="Checking permissions..." />;
+    return <Loading label="Checking permissions..." timeoutMs={12000} troubleshooting />;
   }
 
   if (!session) {

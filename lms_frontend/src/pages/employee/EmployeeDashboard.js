@@ -36,9 +36,13 @@ const EmployeeDashboard = () => {
       setLoading(true);
       setError('');
       try {
+        // eslint-disable-next-line no-console
+        console.debug?.('[EmployeeDashboard] fetching assignments for user', { userId: user.id });
         // RLS-friendly: backend filters based on auth.uid() in policies.
         const { data: assignmentsData, error: aErr, hint: aHint } = await getCurrentUserAssignments();
         if (aErr) {
+          // eslint-disable-next-line no-console
+          console.error('[EmployeeDashboard] assignments fetch error', aErr);
           throw new Error(`${aErr}${aHint ? ` | hint: ${aHint}` : ''}`);
         }
 
@@ -125,7 +129,7 @@ const EmployeeDashboard = () => {
   }, [assignments]);
 
   if (authLoading || loading) {
-    return <Loading message="Loading your dashboard..." />;
+    return <Loading label="Loading your dashboard..." timeoutMs={12000} troubleshooting />;
   }
 
   if (!user) {

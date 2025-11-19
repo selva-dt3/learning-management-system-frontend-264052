@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 /**
  * Role service: centralizes fetching and resolving user roles.
  * Reads from public.user_roles (RLS protected) to get roles for the current user.
- * Falls back gracefully to 'learner' if no roles or on errors.
+ * Must never throw/reject to avoid infinite loading; always resolve with safe defaults.
  */
 
 // Helper to normalize role values
@@ -16,16 +16,15 @@ function normalizeRole(role) {
 // Small helper to log when RLS likely blocked visibility
 function logRlsVisibilityHint(userId, data, error) {
   // eslint-disable-next-line no-console
-  console.debug?.('[roles] query result', { count: Array.isArray(data) ? data.length : null, hasError: !!error });
+  console.debug?.('[roles] query result', { count: Array.isArray(data) ? data.length : null, hasError: !!error, userId });
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.error('[roles] RLS or schema error while reading user_roles. Returning [] to avoid blocking UI.');
+  }
   if (!error && Array.isArray(data) && data.length === 0) {
     // eslint-disable-next-line no-console
     console.warn(
-      '[roles] No roles returned. If you expect roles, check RLS/policies on public.user_roles to ensure user_id is visible to the authenticated user.',
-    );
-    // Provide action hint without leaking secrets
-    // eslint-disable-next-line no-console
-    console.warn(
-      '[roles] For local dev, ensure a row exists in public.user_roles with this user_id and role (admin/hr), and that policy allows authenticated users to select their own rows.',
+      '[roles] No roles found for current user. If access is expected, check RLS/policies on public.user_roles and see README_RLS_TROUBLESHOOTING.md',
     );
   }
 }
@@ -36,24 +35,24 @@ export async function fetchUserRole(userId) {
    * Fetches the user's primary role.
    * Priority: admin > hr > learner (default).
    * Uses public.user_roles with RLS; expects rows like { user_id, role }.
+   * Returns 'learner' on any error or when unauthenticated.
    */
   const DEFAULT_ROLE = 'learner';
   if (!userId) return DEFAULT_ROLE;
 
   try {
+    // eslint-disable-next-line no-console
+    console.debug?.('[roles] fetchUserRole:start', { userId });
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userId);
 
+    logRlsVisibilityHint(userId, data, error);
+
     if (error) {
-      // Avoid logging sensitive info
-      // eslint-disable-next-line no-console
-      console.warn('[roles] user_roles read failed (RLS/policy or schema issue possible)');
       return DEFAULT_ROLE;
     }
-
-    logRlsVisibilityHint(userId, data, error);
 
     const roles = Array.isArray(data) ? data.map((r) => normalizeRole(r.role)).filter(Boolean) : [];
     // eslint-disable-next-line no-console
@@ -61,9 +60,9 @@ export async function fetchUserRole(userId) {
     if (roles.includes('admin')) return 'admin';
     if (roles.includes('hr')) return 'hr';
     return DEFAULT_ROLE;
-  } catch (_e) {
+  } catch (e) {
     // eslint-disable-next-line no-console
-    console.warn('[roles] exception while fetching roles');
+    console.error('[roles] exception while fetching roles; returning default', e?.message);
     return DEFAULT_ROLE;
   }
 }
@@ -72,31 +71,32 @@ export async function fetchUserRole(userId) {
 export async function fetchUserRoles(userId) {
   /**
    * Returns an array of roles for the given user from public.user_roles.
-   * Gracefully returns [] when unauthenticated or when none found.
+   * Gracefully returns [] when unauthenticated or when none found or on RLS error.
+   * This function must never throw; it should be safe in finally blocks.
    */
   if (!userId) return [];
   try {
+    // eslint-disable-next-line no-console
+    console.debug?.('[roles] fetchUserRoles:start', { userId });
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userId);
 
+    logRlsVisibilityHint(userId, data, error);
+
     if (error) {
-      // eslint-disable-next-line no-console
-      console.warn('[roles] user_roles list failed');
       return [];
     }
-
-    logRlsVisibilityHint(userId, data, error);
 
     const roles = Array.isArray(data) ? data.map((r) => normalizeRole(r.role)).filter(Boolean) : [];
     const unique = Array.from(new Set(roles));
     // eslint-disable-next-line no-console
     console.debug?.('[roles] fetchUserRoles result:', unique);
     return unique;
-  } catch (_e) {
+  } catch (e) {
     // eslint-disable-next-line no-console
-    console.warn('[roles] exception while listing roles');
+    console.error('[roles] exception while listing roles; returning []', e?.message);
     return [];
   }
 }

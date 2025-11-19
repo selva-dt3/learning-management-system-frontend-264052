@@ -92,8 +92,16 @@ export default function HRDashboard() {
 
   const fetchPerf = async () => {
     setPerfLoading(true);
+    // eslint-disable-next-line no-console
+    console.debug?.('[HRDashboard] listProgress call', { status: perfStatus });
     const { data, error } = await listProgress({ status: perfStatus, page: 1, pageSize: 10 });
-    if (!error) setPerfRows(data || []);
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.warn('[HRDashboard] listProgress error (RLS?) returning []');
+      setPerfRows([]);
+    } else {
+      setPerfRows(data || []);
+    }
     setPerfLoading(false);
   };
 

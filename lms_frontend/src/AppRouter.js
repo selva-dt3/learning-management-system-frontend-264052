@@ -33,6 +33,8 @@ import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 export default function AppRouter() {
   useEffect(() => {
     injectThemeCSSVariables();
+    // eslint-disable-next-line no-console
+    console.debug?.('[AppRouter] mounted');
   }, []);
 
   return (
