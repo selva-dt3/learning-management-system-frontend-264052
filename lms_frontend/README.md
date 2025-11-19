@@ -14,6 +14,10 @@ A minimal LMS frontend with routing, Ocean Professional theme, Supabase authenti
 - Error Boundary and toast notifications
 - API client placeholder reading `REACT_APP_API_BASE`
 
+New in this update:
+- Admin: Quick-create Lesson form on Admin Dashboard with Supabase Storage uploads (PDF/Video) or external link, resources array, and metadata persisted to lessons table.
+- HR: Assign-by-email form and Performance snapshot embedded in HR Dashboard, using Supabase tables (assignments, progress).
+
 Note: The legacy "Categories" sidebar and "Browse Courses" call-to-action on Home have been removed to simplify navigation.
 
 ## Getting Started
@@ -75,21 +79,192 @@ This app resolves roles from `public.user_roles` with RLS enabled. Only SELECT i
 
 Treat missing roles gracefully as `learner`.
 
+## Admin: Quick-create Lesson
+
+Admin Dashboard now includes a "Create Lesson" form with:
+- Fields: courseId, title, description, contentType [pdf|video|link], optional resources (comma-separated URLs)
+- Uploads: PDF/Video upload to Supabase Storage bucket: `lesson-assets`
+- Persists to table: `public.lessons` with columns:
+  - id uuid default gen_random_uuid()
+  - course_id text/uuid
+  - title text
+  - description text
+  - type text
+  - asset_url text
+  - link_url text
+  - resources text[] (optional)
+  - created_by uuid (auth.users.id)
+  - created_at timestamptz default now()
+
+If upload or insert fails due to missing bucket/table or RLS, the UI shows a clear error and this README contains required SQL.
+
+## HR: Assign by Email and Performance Snapshot
+
+HR Dashboard includes:
+- Assign by Email:
+  - Inputs: employee email, courseId, lesson (select)
+  - Resolves user id via `employees(user_id,email)` if available
+  - Inserts into `public.assignments`:
+    - id uuid default gen_random_uuid()
+    - assignee_user_id uuid
+    - course_id text/uuid
+    - lesson_id uuid
+    - assigned_by uuid
+    - assigned_at timestamptz default now()
+    - status text default 'pending'
+- Performance snapshot:
+  - Reads recent progress from `public.progress` with filters by status
+  - Shows average completion percent
+
+## Supabase SQL (Buckets, Tables, Policies)
+
+Run the following SQL in your Supabase project's SQL editor to provision required schema (adjust types to your preference: uuid/text).
+
+-- Bucket
+-- Create Storage bucket 'lesson-assets' and make it public (or add RLS policies for read as needed)
+-- In Dashboard → Storage: create bucket 'lesson-assets' (public)
+-- Or via SQL (if using supabase CLI, requires service role):
+-- select storage.create_bucket('lesson-assets', public => true);
+
+-- Tables
+create table if not exists public.courses (
+  id uuid primary key default gen_random_uuid(),
+  name text not null
+);
+
+create table if not exists public.lessons (
+  id uuid primary key default gen_random_uuid(),
+  course_id text not null,
+  title text not null,
+  description text,
+  type text check (type in ('pdf','video','link')) not null,
+  asset_url text,
+  link_url text,
+  resources text[],
+  created_by uuid,
+  created_at timestamptz default now()
+);
+
+create table if not exists public.assignments (
+  id uuid primary key default gen_random_uuid(),
+  assignee_user_id uuid not null,
+  course_id text,
+  lesson_id uuid,
+  assigned_by uuid,
+  assigned_at timestamptz default now(),
+  status text default 'pending'
+);
+
+create table if not exists public.progress (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  course_id text,
+  lesson_id uuid,
+  completion_pct numeric default 0,
+  last_accessed timestamptz default now()
+);
+
+-- Optional mapping table used by HR email assignment helper:
+-- stores employee->auth user mapping to resolve emails
+create table if not exists public.employees (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid,
+  email text unique,
+  name text,
+  department text,
+  role text,
+  status text,
+  created_at timestamptz default now()
+);
+
+-- RLS
+alter table public.courses enable row level security;
+alter table public.lessons enable row level security;
+alter table public.assignments enable row level security;
+alter table public.progress enable row level security;
+alter table public.employees enable row level security;
+alter table public.user_roles enable row level security;
+
+-- Basic policies (example, adapt for your org's rules)
+
+-- Authenticated users can read lessons
+create policy if not exists lessons_read
+on public.lessons for select
+to authenticated
+using (true);
+
+-- Admins can insert lessons (example role check expects user_roles)
+create policy if not exists lessons_insert_admin
+on public.lessons for insert
+to authenticated
+with check (exists (select 1 from public.user_roles ur where ur.user_id = auth.uid() and ur.role = 'admin'));
+
+-- Authenticated read assignments
+create policy if not exists assignments_read
+on public.assignments for select
+to authenticated
+using (true);
+
+-- HR/Admin can insert assignments
+create policy if not exists assignments_insert_hr_admin
+on public.assignments for insert
+to authenticated
+with check (exists (select 1 from public.user_roles ur where ur.user_id = auth.uid() and ur.role in ('hr','admin')));
+
+-- Authenticated read progress
+create policy if not exists progress_read
+on public.progress for select
+to authenticated
+using (true);
+
+-- Learners upsert own progress (example)
+create policy if not exists progress_upsert_self
+on public.progress for insert
+to authenticated
+with check (user_id = auth.uid());
+
+create policy if not exists progress_update_self
+on public.progress for update
+to authenticated
+using (user_id = auth.uid());
+
+-- Employees table read for HR/Admin
+create policy if not exists employees_read_hr_admin
+on public.employees for select
+to authenticated
+using (exists (select 1 from public.user_roles ur where ur.user_id = auth.uid() and ur.role in ('hr','admin')));
+
+-- user_roles read own rows
+create policy if not exists user_roles_self
+on public.user_roles for select
+to authenticated
+using (user_id = auth.uid());
+
+-- Optional: Storage public read (handled by bucket 'public' setting).
+-- If bucket isn't public, add storage policies (requires SQL via storage.objects).
+
+## Troubleshooting
+
+- Storage upload fails with "bucket not found":
+  - Create Storage bucket named `lesson-assets` (public) in Supabase.
+- Insert blocked with RLS error:
+  - Apply the SQL policies above and ensure your user has role rows in `public.user_roles`.
+- Assign by email can't resolve user:
+  - Ensure `public.employees` contains a row with `email` and `user_id` pointing to the auth.users id.
+
 ## Key Files
-- `src/lib/supabaseClient.js` — Supabase client (uses REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY)
-- `src/lib/auth.js` — Auth provider and guards (ProtectedRoute, RoleProtectedRoute), role-aware redirects
-- `src/lib/services/roles.js` — RLS-backed role resolution from `public.user_roles`
-- `src/components/Header.js` — session-aware header with role-aware navigation and role-specific sign-in buttons
-- `src/components/Loading.js` — themed loading indicator
-- `src/components/AccessDenied.js` — themed 403 component
+- `src/lib/supabaseClient.js` — Supabase client
+- `src/lib/services/supabaseHelpers.js` — Storage upload helper, schema hints, and email→user id resolver
+- `src/pages/admin/AdminDashboard.js` — Lesson quick-create form with uploads
+- `src/pages/hr/HRDashboard.js` — Assign-by-email and performance snapshot
 
 ## Security
 - No secrets are hardcoded; environment-only configuration using:
   - `REACT_APP_SUPABASE_URL`
   - `REACT_APP_SUPABASE_KEY`
 - No sensitive data is logged
-- Client-side input validation on auth forms
-- Note: Database schema/policies are not modified by this app; ensure RLS policies are configured server-side.
+- Client-side input validation on forms
+- RLS must be configured server-side; client shows friendly guidance if blocked.
 
 ## Scripts
 - `npm start` — start development server
@@ -101,5 +276,5 @@ Important:
 - Ensure .env is not committed.
 - Provide valid Supabase URL and anon/public key.
 - Ensure user RLS policies allow reading own rows from public.user_roles.
-- Signup flows are disabled; use the sign-in buttons and provision accounts via your identity provider or admin.
+- Create Storage bucket 'lesson-assets' and run provided table/policy SQL.
 ```
