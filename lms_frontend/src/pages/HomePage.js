@@ -17,7 +17,7 @@ export default function HomePage() {
         {user?.email ? (
           <Link to="/profile" className="btn btn-secondary">Go to Profile</Link>
         ) : (
-          <Link to="/login" className="btn btn-secondary">Sign In</Link>
+          <Link to="/auth/login" className="btn btn-secondary">Sign In</Link>
         )}
       </div>
     </div>

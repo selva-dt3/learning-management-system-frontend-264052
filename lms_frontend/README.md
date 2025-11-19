@@ -3,7 +3,7 @@
 A minimal LMS frontend scaffolded with routing, Ocean Professional theme, Supabase authentication, and role-based access control (RBAC).
 
 ## Features
-- Routing with react-router: `/`, `/courses`, `/courses/:id`, `/profile` (protected), `/login`
+- Routing with react-router: `/`, `/courses`, `/courses/:id`, `/profile` (protected), `/auth/login`, `/auth/signup` (dedicated)
 - RBAC with Supabase: `/admin` (admin only), `/hr` (hr and admin)
 - Ocean Professional theme (modern, subtle shadows, rounded corners, gradients)
 - Supabase auth wiring (email/password), session-aware layout and role-aware navigation
@@ -40,7 +40,21 @@ Open http://localhost:3000
   - `REACT_APP_SUPABASE_KEY` — anon/public key from your Supabase project
 
 ### Added Auth UI
-- A session-aware Header is rendered globally. When signed out, it shows Sign In/Sign Up modals (email/password). When signed in, it shows the user email and Sign Out button.
+- A session-aware Header is rendered globally. When signed out, it shows Sign In/Sign Up links to dedicated routes. When signed in, it shows the user email and Sign Out button.
+
+### Authentication Pages
+- `/auth/login` — Email/password sign in with validation, loading states, and error messaging.
+- `/auth/signup` — Email/password sign up with password confirmation, validation, and status messaging.
+- Both pages use the Ocean Professional theme (primary #2563EB, secondary #F59E0B), subtle shadows, rounded corners, and smooth transitions.
+- After successful auth, users are redirected to their previous destination (if any) or `/`.
+- Backward compatibility: `/login` continues to work and routes to the new login page.
+
+### Environment
+- Required:
+  - `REACT_APP_SUPABASE_URL`
+  - `REACT_APP_SUPABASE_KEY`
+- Optional:
+  - `REACT_APP_FRONTEND_URL` — sets Supabase emailRedirectTo during signup.
 
 ## RBAC and Supabase Profiles
 

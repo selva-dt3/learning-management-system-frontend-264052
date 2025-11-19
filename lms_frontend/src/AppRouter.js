@@ -5,8 +5,9 @@ import HomePage from './pages/HomePage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailsPage from './pages/CourseDetailsPage';
 import ProfilePage from './pages/ProfilePage';
-import LoginPage from './pages/LoginPage';
 import { ProtectedRoute, AuthProvider, RoleProtectedRoute } from './lib/auth';
+import Login from './pages/auth/Login';
+import Signup from './pages/auth/Signup';
 import { ToastProvider } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { injectThemeCSSVariables } from './styles/theme';
@@ -40,7 +41,10 @@ export default function AppRouter() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/courses" element={<CoursesPage />} />
                 <Route path="/courses/:id" element={<CourseDetailsPage />} />
-                <Route path="/login" element={<LoginPage />} />
+                <Route path="/auth/login" element={<Login />} />
+                <Route path="/auth/signup" element={<Signup />} />
+                {/* Backward compatibility: keep /login pointing to new page */}
+                <Route path="/login" element={<Login />} />
 
                 <Route
                   path="/profile"
