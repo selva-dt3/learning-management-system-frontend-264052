@@ -4,7 +4,7 @@ A minimal LMS frontend with routing, Ocean Professional theme, Supabase authenti
 
 ## Features
 - Routing with react-router: `/`, `/courses`, `/courses/:id`, `/profile` (protected), `/auth/login`
-- RBAC with Supabase (RLS-backed from `public.user_roles`): `/admin` (admin only), `/hr` (hr and admin)
+- Public UI pages: `/admin` and `/hr` are now accessible without login. Note: Supabase data writes may still require authentication due to RLS.
 - Ocean Professional theme (primary #2563EB, amber accents #F59E0B), subtle shadows, rounded corners
 - Supabase auth wiring (email/password), session-aware layout and role-aware navigation
 - Contextual header links: HR/Admin links appear only if user has those roles
@@ -111,10 +111,10 @@ This app resolves roles from `public.user_roles` with RLS enabled. Only SELECT i
   - Primary role is chosen by priority: admin > hr > learner
   - `fetchUserRoles(userId)` returns a unique array of roles
 - Guards:
-  - `ProtectedRoute` requires authentication; redirects to `/auth/login`
-  - `RoleProtectedRoute` requires role membership; shows a themed 403 (AccessDenied) when unauthorized
+  - `ProtectedRoute` requires authentication; redirects to `/auth/login` (used for Employee routes like `/employee`)
+  - `RoleProtectedRoute` remains available in code but Admin/HR routes are now public and do not use it
 - Redirects and Sign-out:
-  - After login: If user has `admin` → `/admin`, else if `hr` → `/hr`, else → `/`
+  - After login: No forced redirect to Admin/HR; users remain on the current page unless the login page navigates them back to a stored referrer
   - Sign-out: Header/Profile sign-out triggers Supabase `auth.signOut()`, immediately clears local auth/roles state in `AuthProvider`, and navigates to `/`. Protected routes react instantly to unauthenticated state.
 - Navigation:
   - Header shows "HR" link when role is hr or admin
@@ -140,6 +140,9 @@ Admin Dashboard now includes a "Create Lesson" form with:
   - created_at timestamptz default now()
 
 If upload or insert fails due to missing bucket/table or RLS, the UI shows a clear error and this README contains required SQL.
+
+## Public Admin/HR Pages and RLS
+Admin and HR dashboard pages are now public UI pages and can be accessed without logging in. However, any operations that write to Supabase (e.g., creating lessons, assignments, seeding) will still be subject to Row Level Security (RLS) and typically require an authenticated user with appropriate roles, or a backend service using a service-role key. We do not weaken RLS from the client. If you need unauthenticated management capabilities, create backend APIs that perform writes using a service role and call them from the frontend.
 
 ## HR: Assign by Email and Performance Snapshot
 

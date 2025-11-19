@@ -206,11 +206,10 @@ export function AuthProvider({ children }) {
         );
       }
 
-      // Post-login redirect by role AFTER roles loaded
+      // Post-login: do not force redirect to role dashboards; allow user to stay on current page
+      // Optionally, if a previous route was stored in state, navigation can happen in the login page itself.
       if (event === 'SIGNED_IN') {
-        if (resolved.role === 'admin') safeNavigate('/admin', { replace: true });
-        else if (resolved.role === 'hr') safeNavigate('/hr', { replace: true });
-        else safeNavigate('/', { replace: true });
+        // No-op: keep current location
       }
       if (event === 'SIGNED_OUT') {
         safeNavigate('/', { replace: true });

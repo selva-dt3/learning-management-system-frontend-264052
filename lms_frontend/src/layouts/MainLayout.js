@@ -8,9 +8,9 @@ import Header from '../components/Header';
 console.debug?.('[Layout] MainLayout loaded');
 
 function NavbarLinks() {
-  const { role } = useAuth();
-  const isAdmin = role === 'admin';
-  const isHR = role === 'hr' || role === 'admin';
+  // Role is no longer used for showing Admin/HR links in the public UI
+  const isAdmin = true;
+  const isHR = true;
 
   return (
     <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.75rem', paddingBottom: '0.75rem' }}>

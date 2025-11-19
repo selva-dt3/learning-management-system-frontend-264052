@@ -52,18 +52,16 @@ export default function Header() {
             }} />
           </Link>
           <span style={{ fontWeight: 800, color: '#0f172a' }}>LMS</span>
-          {user && (
-            <div style={{ display: 'flex', gap: 10, marginLeft: 16 }}>
-              {isHR && <Link className="badge" to="/hr">HR</Link>}
-              {isAdmin && <Link className="badge" to="/admin">Admin</Link>}
-            </div>
-          )}
+          <div style={{ display: 'flex', gap: 10, marginLeft: 16 }}>
+            <Link className="badge" to="/hr">HR</Link>
+            <Link className="badge" to="/admin">Admin</Link>
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {!user && (
             <>
-              <Link className="btn btn-secondary" to="/auth/login?role=admin" aria-label="Admin Sign In">Admin Sign In</Link>
-              <Link className="btn btn-secondary" to="/auth/login?role=hr" aria-label="HR Sign In">HR Sign In</Link>
+              <Link className="btn btn-secondary" to="/hr" aria-label="Go to HR">HR</Link>
+              <Link className="btn btn-secondary" to="/admin" aria-label="Go to Admin">Admin</Link>
               <Link className="btn" to="/auth/login?role=employee" aria-label="Employee Sign In">Employee Sign In</Link>
             </>
           )}

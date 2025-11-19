@@ -9,7 +9,7 @@ import HomePage from './pages/HomePage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailsPage from './pages/CourseDetailsPage';
 import ProfilePage from './pages/ProfilePage';
-import { ProtectedRoute, AuthProvider, RoleProtectedRoute } from './lib/auth';
+import { ProtectedRoute, AuthProvider } from './lib/auth';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import { ToastProvider } from './components/Toast';
@@ -124,9 +124,7 @@ export default function AppRouter() {
         path: '/admin',
         element: (
           <MainLayout>
-            <RoleProtectedRoute allowedRoles={['admin']}>
-              <AdminDashboard />
-            </RoleProtectedRoute>
+            <AdminDashboard />
           </MainLayout>
         ),
       },
@@ -134,9 +132,7 @@ export default function AppRouter() {
         path: '/admin/employees',
         element: (
           <MainLayout>
-            <RoleProtectedRoute allowedRoles={['admin']}>
-              <EmployeesListPage />
-            </RoleProtectedRoute>
+            <EmployeesListPage />
           </MainLayout>
         ),
       },
@@ -144,9 +140,7 @@ export default function AppRouter() {
         path: '/admin/employees/new',
         element: (
           <MainLayout>
-            <RoleProtectedRoute allowedRoles={['admin']}>
-              <EmployeeFormPage />
-            </RoleProtectedRoute>
+            <EmployeeFormPage />
           </MainLayout>
         ),
       },
@@ -154,9 +148,7 @@ export default function AppRouter() {
         path: '/admin/employees/:id',
         element: (
           <MainLayout>
-            <RoleProtectedRoute allowedRoles={['admin']}>
-              <EmployeeFormPage />
-            </RoleProtectedRoute>
+            <EmployeeFormPage />
           </MainLayout>
         ),
       },
@@ -164,9 +156,7 @@ export default function AppRouter() {
         path: '/admin/lessons',
         element: (
           <MainLayout>
-            <RoleProtectedRoute allowedRoles={['admin']}>
-              <LessonsListPage />
-            </RoleProtectedRoute>
+            <LessonsListPage />
           </MainLayout>
         ),
       },
@@ -174,9 +164,7 @@ export default function AppRouter() {
         path: '/admin/lessons/new',
         element: (
           <MainLayout>
-            <RoleProtectedRoute allowedRoles={['admin']}>
-              <LessonFormPage />
-            </RoleProtectedRoute>
+            <LessonFormPage />
           </MainLayout>
         ),
       },
@@ -184,9 +172,7 @@ export default function AppRouter() {
         path: '/admin/lessons/:id',
         element: (
           <MainLayout>
-            <RoleProtectedRoute allowedRoles={['admin']}>
-              <LessonFormPage />
-            </RoleProtectedRoute>
+            <LessonFormPage />
           </MainLayout>
         ),
       },
@@ -194,9 +180,7 @@ export default function AppRouter() {
         path: '/hr',
         element: (
           <MainLayout>
-            <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
-              <HRDashboard />
-            </RoleProtectedRoute>
+            <HRDashboard />
           </MainLayout>
         ),
       },
@@ -204,9 +188,7 @@ export default function AppRouter() {
         path: '/hr/assignments',
         element: (
           <MainLayout>
-            <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
-              <AssignmentsPage />
-            </RoleProtectedRoute>
+            <AssignmentsPage />
           </MainLayout>
         ),
       },
@@ -214,9 +196,7 @@ export default function AppRouter() {
         path: '/hr/assignments/new',
         element: (
           <MainLayout>
-            <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
-              <AssignmentFormPage />
-            </RoleProtectedRoute>
+            <AssignmentFormPage />
           </MainLayout>
         ),
       },
@@ -224,9 +204,7 @@ export default function AppRouter() {
         path: '/hr/assignments/:id',
         element: (
           <MainLayout>
-            <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
-              <AssignmentFormPage />
-            </RoleProtectedRoute>
+            <AssignmentFormPage />
           </MainLayout>
         ),
       },
@@ -234,9 +212,7 @@ export default function AppRouter() {
         path: '/hr/progress',
         element: (
           <MainLayout>
-            <RoleProtectedRoute allowedRoles={['hr', 'admin']}>
-              <ProgressPage />
-            </RoleProtectedRoute>
+            <ProgressPage />
           </MainLayout>
         ),
       },

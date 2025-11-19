@@ -147,7 +147,6 @@ export default function HRDashboard() {
   }, [perfRows]);
 
   return (
-    // Page is guarded by RoleProtectedRoute in AppRouter (hr or admin).
     <div style={{ display: 'grid', gap: 16 }}>
       <div
         className="card"
@@ -157,6 +156,11 @@ export default function HRDashboard() {
           borderColor: 'var(--oc-secondary)',
         }}
       >
+        {!user && (
+          <div style={{ marginBottom: 8, color: '#7c2d12', background: '#fffbeb', border: '1px solid #fde68a', padding: '8px 12px', borderRadius: 8 }}>
+            HR page is public. Actions such as creating assignments or viewing protected data may require you to sign in and have appropriate RLS policies. Use a backend service role for non-user actions.
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <div>
             <div className="badge" style={{ marginBottom: 6, borderColor: 'var(--oc-secondary)' }}>

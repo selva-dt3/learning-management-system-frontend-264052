@@ -198,7 +198,6 @@ export default function AdminDashboard() {
   };
 
   return (
-    // Page is guarded by RoleProtectedRoute in AppRouter (admin only).
     <div style={{ display: 'grid', gap: 16 }}>
       <div
         className="card"
@@ -208,6 +207,11 @@ export default function AdminDashboard() {
           borderColor: 'var(--oc-primary)',
         }}
       >
+        {!user && (
+          <div style={{ marginBottom: 8, color: '#7c2d12', background: '#fffbeb', border: '1px solid #fde68a', padding: '8px 12px', borderRadius: 8 }}>
+            Admin page is public. For actions that write to Supabase (e.g., create lessons, seed data), authentication and proper RLS policies are still required. Consider adjusting RLS or moving writes to a backend with a service role.
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <div>
             <div className="badge" style={{ marginBottom: 6, borderColor: 'var(--oc-primary)' }}>

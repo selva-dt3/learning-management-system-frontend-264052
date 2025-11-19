@@ -45,9 +45,9 @@ export default function LoginPage() {
       setSubmitting(true);
       await signInWithEmail(email, password);
       notify('Signed in successfully', 'success');
-      // Let AuthProvider route to /admin or /hr after roles loaded.
+      // No forced post-login redirect. If a referrer exists, it will be handled by router state in this component.
       // eslint-disable-next-line no-console
-      console.debug?.('[LoginPage] sign-in initiated, awaiting AuthProvider redirect');
+      console.debug?.('[LoginPage] sign-in initiated');
     } catch (_e) {
       notify('Unable to sign in. Please check your credentials.', 'error');
     } finally {
