@@ -37,6 +37,8 @@ export async function fetchUserRole(userId) {
     }
 
     const roles = Array.isArray(data) ? data.map(r => normalizeRole(r.role)).filter(Boolean) : [];
+    // eslint-disable-next-line no-console
+    console.debug?.('[roles] fetchUserRole roles:', roles);
     if (roles.includes('admin')) return 'admin';
     if (roles.includes('hr')) return 'hr';
     return DEFAULT_ROLE;
@@ -60,7 +62,10 @@ export async function fetchUserRoles(userId) {
 
     if (error) return [];
     const roles = Array.isArray(data) ? data.map(r => normalizeRole(r.role)).filter(Boolean) : [];
-    return Array.from(new Set(roles));
+    const unique = Array.from(new Set(roles));
+    // eslint-disable-next-line no-console
+    console.debug?.('[roles] fetchUserRoles result:', unique);
+    return unique;
   } catch (_e) {
     return [];
   }

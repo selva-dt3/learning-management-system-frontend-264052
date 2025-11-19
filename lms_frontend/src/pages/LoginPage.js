@@ -18,6 +18,8 @@ export default function LoginPage() {
 
   if (session) {
     // Already logged in, redirect quickly
+    // eslint-disable-next-line no-console
+    console.debug?.('[LoginPage] already authenticated, redirecting to', from);
     navigate(from, { replace: true });
   }
 
@@ -39,7 +41,9 @@ export default function LoginPage() {
       setSubmitting(true);
       await signInWithEmail(email, password);
       notify('Signed in successfully', 'success');
-      navigate(from, { replace: true });
+      // Let AuthProvider route to /admin or /hr after roles loaded.
+      // eslint-disable-next-line no-console
+      console.debug?.('[LoginPage] sign-in initiated, awaiting AuthProvider redirect');
     } catch (_e) {
       notify('Unable to sign in. Please check your credentials.', 'error');
     } finally {

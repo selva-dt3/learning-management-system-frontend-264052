@@ -14,6 +14,9 @@ export default function Header() {
   const { user, role } = useAuth();
   const { notify } = useToast();
 
+  // eslint-disable-next-line no-console
+  console.debug?.('[Header] user/role', { userId: user?.id, email: user?.email, role });
+
   const onSignOut = async () => {
     try {
       await signOut();

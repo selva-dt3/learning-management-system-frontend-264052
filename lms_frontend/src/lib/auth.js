@@ -95,6 +95,7 @@ const AuthContext = createContext({
   role: 'learner',
   roles: [],
   loading: true,
+  rolesLoading: true,
   signInWithEmailPassword: async () => {},
   signUpWithEmailPassword: async () => {},
   signOut: async () => {},
@@ -112,7 +113,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState('learner');
   const [roles, setRoles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);       // session/user loading
+  const [rolesLoading, setRolesLoading] = useState(true); // roles loading to avoid race conditions
 
   // Always call useNavigate to satisfy hooks rules; Router presence is ensured by AppRouter.
   const navigate = useNavigate();
@@ -122,51 +124,77 @@ export function AuthProvider({ children }) {
     try {
       navigate(to, options);
     } catch (_e) {
-      // If somehow not in Router context during tests, swallow navigation
+      // swallow during tests if Router not present
     }
   }, [navigate]);
 
+  const resolveRoles = useCallback(async (uid) => {
+    try {
+      if (!uid) {
+        setRole('learner');
+        setRoles([]);
+        return { role: 'learner', roles: [] };
+      }
+      const [r, arr] = await Promise.all([
+        fetchUserRole(uid),
+        fetchUserRoles(uid)
+      ]);
+      setRole(r);
+      setRoles(arr);
+      return { role: r, roles: arr };
+    } catch (_e) {
+      // eslint-disable-next-line no-console
+      console.warn('Roles fetch failed');
+      setRole('learner');
+      setRoles([]);
+      return { role: 'learner', roles: [] };
+    }
+  }, []);
+
   const refreshSession = useCallback(async () => {
+    // eslint-disable-next-line no-console
+    console.debug?.('[Auth] refreshSession:start');
+    setLoading(true);
+    setRolesLoading(true);
     try {
       const current = await getSession();
       setSession(current);
       const currentUser = current?.user ?? null;
       setUser(currentUser);
-      const [r, arr] = await Promise.all([
-        fetchUserRole(currentUser?.id),
-        fetchUserRoles(currentUser?.id)
-      ]);
-      setRole(r);
-      setRoles(arr);
+      const resolved = await resolveRoles(currentUser?.id);
+      // eslint-disable-next-line no-console
+      console.debug?.('[Auth] refreshSession:roles', resolved);
     } catch (_e) {
       // avoid leaking sensitive data
       // eslint-disable-next-line no-console
-      console.warn('Auth session fetch failed');
+      console.warn('[Auth] session fetch failed');
       setRole('learner');
       setRoles([]);
     } finally {
       setLoading(false);
+      setRolesLoading(false);
+      // eslint-disable-next-line no-console
+      console.debug?.('[Auth] refreshSession:done');
     }
-  }, []);
+  }, [resolveRoles]);
 
   useEffect(() => {
     refreshSession();
     const { data: sub } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      // eslint-disable-next-line no-console
+      console.debug?.('[Auth] onAuthStateChange', event);
       setSession(newSession);
       const newUser = newSession?.user ?? null;
       setUser(newUser);
-      const [r, arr] = await Promise.all([
-        fetchUserRole(newUser?.id),
-        fetchUserRoles(newUser?.id)
-      ]);
-      setRole(r);
-      setRoles(arr);
-      setLoading(false);
 
-      // Post-login redirect by role, only when Router context is present
+      setRolesLoading(true);
+      const resolved = await resolveRoles(newUser?.id);
+      setRolesLoading(false);
+
+      // Post-login redirect by role AFTER roles loaded
       if (event === 'SIGNED_IN') {
-        if (r === 'admin') safeNavigate('/admin', { replace: true });
-        else if (r === 'hr') safeNavigate('/hr', { replace: true });
+        if (resolved.role === 'admin') safeNavigate('/admin', { replace: true });
+        else if (resolved.role === 'hr') safeNavigate('/hr', { replace: true });
         else safeNavigate('/', { replace: true });
       }
       if (event === 'SIGNED_OUT') {
@@ -176,7 +204,7 @@ export function AuthProvider({ children }) {
     return () => {
       sub.subscription?.unsubscribe?.();
     };
-  }, [refreshSession, safeNavigate]);
+  }, [refreshSession, resolveRoles, safeNavigate]);
 
   const ctx = {
     user,
@@ -184,6 +212,7 @@ export function AuthProvider({ children }) {
     role,
     roles,
     loading,
+    rolesLoading,
     refreshSession,
     // Context methods for UI consumption
     signInWithEmailPassword: signInWithEmail,
@@ -231,12 +260,13 @@ export function RoleProtectedRoute({ children, allowedRoles = [] }) {
    * Role-based protected route wrapper: ensures user has one of allowedRoles.
    * Unauthenticated users are redirected to /auth/login.
    * Authenticated but unauthorized users see a friendly 403 message.
+   * Waits for roles to finish loading to avoid race condition.
    */
-  const { session, role, loading } = useAuth();
+  const { session, role, loading, rolesLoading } = useAuth();
   const location = useLocation();
 
-  if (loading) {
-    return <Loading />;
+  if (loading || rolesLoading) {
+    return <Loading label="Checking permissions..." />;
   }
 
   if (!session) {

@@ -22,6 +22,8 @@ export default function Login() {
 
   // already logged in, redirect to intended page
   if (session) {
+    // eslint-disable-next-line no-console
+    console.debug?.('[Login] already authenticated, redirecting to', from);
     navigate(from, { replace: true });
   }
 
@@ -47,8 +49,10 @@ export default function Login() {
       setSubmitting(true);
       await signInWithEmail(form.email, form.password);
       notify('Signed in successfully', 'success');
-      navigate(from, { replace: true });
-    } catch (err) {
+      // Do not navigate immediately; let AuthProvider handle role-aware redirect
+      // eslint-disable-next-line no-console
+      console.debug?.('[Login] sign-in initiated, waiting for AuthProvider redirect');
+    } catch (_err) {
       setSubmitError('Unable to sign in. Please check your credentials.');
       notify('Unable to sign in', 'error');
     } finally {
