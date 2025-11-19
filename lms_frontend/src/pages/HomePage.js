@@ -21,14 +21,18 @@ export default function HomePage() {
 
   return (
     <div className="card" style={{ padding: '1.5rem', background: 'var(--oc-gradient)' }}>
+      <div>
+        <h1 style={{ marginTop: 0, fontWeight: 800, color: 'var(--oc-text)' }}>Welcome to DT3 LMS Console</h1>
+        <div style={{ height: 1, background: 'linear-gradient(90deg, rgba(37,99,235,0.35), rgba(229,231,235,0.5))', marginTop: 6, marginBottom: 12 }} />
+      </div>
       {showEmployeeWelcome ? (
         <>
           <div className="badge" style={{ marginBottom: 8, borderColor: 'var(--oc-primary)' }}>
             Welcome Employee
           </div>
-          <h1 style={{ marginTop: 0 }}>
+          <h2 style={{ marginTop: 0 }}>
             {user?.email ? `Hello, ${user.email}` : 'Employee Dashboard'}
-          </h1>
+          </h2>
           <p style={{ color: 'var(--oc-muted-text)' }}>
             Track your assignments, view lessons, and monitor your learning progress.
           </p>
@@ -39,7 +43,7 @@ export default function HomePage() {
         </>
       ) : (
         <>
-          <h1 style={{ marginTop: 0 }}>Welcome {user?.email ? `, ${user.email}` : ''}</h1>
+          <h2 style={{ marginTop: 0 }}>Welcome {user?.email ? `, ${user.email}` : ''}</h2>
           <p style={{ color: 'var(--oc-muted-text)' }}>
             Track your progress and enhance your skills.
           </p>

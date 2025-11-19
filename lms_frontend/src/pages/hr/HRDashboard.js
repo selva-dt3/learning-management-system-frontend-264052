@@ -156,17 +156,17 @@ export default function HRDashboard() {
           borderColor: 'var(--oc-secondary)',
         }}
       >
-        {!user && (
-          <div style={{ marginBottom: 8, color: '#7c2d12', background: '#fffbeb', border: '1px solid #fde68a', padding: '8px 12px', borderRadius: 8 }}>
-            HR page is public. Actions such as creating assignments or viewing protected data may require you to sign in and have appropriate RLS policies. Use a backend service role for non-user actions.
-          </div>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+        {/* Global console heading */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 8 }}>
           <div>
-            <div className="badge" style={{ marginBottom: 6, borderColor: 'var(--oc-secondary)' }}>
+            <h1 style={{ margin: 0, fontWeight: 800, color: 'var(--oc-text)' }}>
+              Welcome to DT3 LMS Console
+            </h1>
+            <div style={{ height: 1, background: 'linear-gradient(90deg, rgba(37,99,235,0.35), rgba(229,231,235,0.5))', marginTop: 8, marginBottom: 8 }} />
+            <div className="badge" style={{ borderColor: 'var(--oc-secondary)' }}>
               Welcome HR
             </div>
-            <h2 style={{ margin: 0 }}>HR Dashboard</h2>
+            <div style={{ fontSize: 18, fontWeight: 700, marginTop: 4 }}>HR Dashboard</div>
             <div style={{ color: 'var(--oc-muted-text)' }}>
               {user?.email ? `Signed in as ${user.email}. ` : ''}Assign lessons and track team progress.
             </div>
@@ -175,6 +175,12 @@ export default function HRDashboard() {
             Role: {role}
           </div>
         </div>
+
+        {!user && (
+          <div style={{ marginTop: 4, color: '#7c2d12', background: '#fffbeb', border: '1px solid #fde68a', padding: '8px 12px', borderRadius: 8 }}>
+            HR page is public. Actions such as creating assignments or viewing protected data may require you to sign in and have appropriate RLS policies. Use a backend service role for non-user actions.
+          </div>
+        )}
       </div>
 
       {setupHints.length > 0 && (

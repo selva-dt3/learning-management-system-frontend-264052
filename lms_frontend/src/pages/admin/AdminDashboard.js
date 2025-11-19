@@ -259,17 +259,17 @@ export default function AdminDashboard() {
           borderColor: 'var(--oc-primary)',
         }}
       >
-        {!user && (
-          <div style={{ marginBottom: 8, color: '#7c2d12', background: '#fffbeb', border: '1px solid #fde68a', padding: '8px 12px', borderRadius: 8 }}>
-            Admin page is public. For actions that write to Supabase (e.g., create lessons, seed data), authentication and proper RLS policies are still required. Consider adjusting RLS or moving writes to a backend with a service role.
-          </div>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+        {/* Global console heading */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 8 }}>
           <div>
-            <div className="badge" style={{ marginBottom: 6, borderColor: 'var(--oc-primary)' }}>
+            <h1 style={{ margin: 0, fontWeight: 800, color: 'var(--oc-text)' }}>
+              Welcome to DT3 LMS Console
+            </h1>
+            <div style={{ height: 1, background: 'linear-gradient(90deg, rgba(37,99,235,0.35), rgba(229,231,235,0.5))', marginTop: 8, marginBottom: 8 }} />
+            <div className="badge" style={{ borderColor: 'var(--oc-primary)' }}>
               Welcome Admin
             </div>
-            <h2 style={{ margin: 0 }}>Admin Dashboard</h2>
+            <div style={{ fontSize: 18, fontWeight: 700, marginTop: 4 }}>Admin Dashboard</div>
             <div style={{ color: 'var(--oc-muted-text)' }}>
               {user?.email ? `Signed in as ${user.email}. ` : ''}Manage platform settings and content.
             </div>
@@ -278,6 +278,12 @@ export default function AdminDashboard() {
             Role: {role}
           </div>
         </div>
+
+        {!user && (
+          <div style={{ marginTop: 4, color: '#7c2d12', background: '#fffbeb', border: '1px solid #fde68a', padding: '8px 12px', borderRadius: 8 }}>
+            Admin page is public. For actions that write to Supabase (e.g., create lessons, seed data), authentication and proper RLS policies are still required. Consider adjusting RLS or moving writes to a backend with a service role.
+          </div>
+        )}
       </div>
 
       {hints.length > 0 && (

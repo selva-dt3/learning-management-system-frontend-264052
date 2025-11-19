@@ -182,16 +182,20 @@ const EmployeeDashboard = () => {
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-blue-500/10 to-gray-50">
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Welcome, Employee</h1>
-            <p className="text-gray-600 mt-1">Track your assignments and learning progress</p>
-          </div>
-          {isAdminOrHr && (
-            <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded">
-              You have admin/hr role. Use Admin/HR dashboards for management tasks.
+        <div className="mb-6">
+          <h1 className="text-3xl font-extrabold text-gray-900">Welcome to DT3 LMS Console</h1>
+          <div className="h-px bg-gradient-to-r from-blue-500/40 to-gray-200 my-2" />
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-lg font-semibold text-gray-900">Welcome, Employee</div>
+              <p className="text-gray-600 mt-1">Track your assignments and learning progress</p>
             </div>
-          )}
+            {isAdminOrHr && (
+              <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded">
+                You have admin/hr role. Use Admin/HR dashboards for management tasks.
+              </div>
+            )}
+          </div>
         </div>
 
         {error && (
