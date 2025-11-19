@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import Header from '../components/Header';
@@ -41,27 +41,6 @@ function NavbarLinks() {
   );
 }
 
-function Sidebar({ open }) {
-  return (
-    <aside className="hidden-mobile" style={{
-      width: 260,
-      flexShrink: 0,
-      display: open ? 'block' : 'none'
-    }}>
-      <div className="card" style={{ padding: '1rem' }}>
-        <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>Categories</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span className="badge">All</span>
-          <span className="badge">Development</span>
-          <span className="badge">Design</span>
-          <span className="badge">Marketing</span>
-          <span className="badge">Data</span>
-        </div>
-      </div>
-    </aside>
-  );
-}
-
 function Footer() {
   return (
     <footer className="footer">
@@ -72,16 +51,14 @@ function Footer() {
   );
 }
 
- // PUBLIC_INTERFACE
+// PUBLIC_INTERFACE
 export default function MainLayout({ children }) {
-  const [sidebarOpen] = useState(true);
-
+  // Removed sidebar/Categories; keep a clean main content area with consistent spacing.
   return (
     <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
       <Header />
-      <div className="container" style={{ display: 'flex', gap: 16, paddingTop: '1rem', paddingBottom: '1rem', flex: 1 }}>
-        <Sidebar open={sidebarOpen} />
-        <main style={{ flex: 1, minWidth: 0 }}>
+      <div className="container" style={{ paddingTop: '1rem', paddingBottom: '1rem', flex: 1 }}>
+        <main style={{ minWidth: 0 }}>
           {children}
         </main>
       </div>

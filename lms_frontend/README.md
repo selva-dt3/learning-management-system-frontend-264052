@@ -14,6 +14,8 @@ A minimal LMS frontend with routing, Ocean Professional theme, Supabase authenti
 - Error Boundary and toast notifications
 - API client placeholder reading `REACT_APP_API_BASE`
 
+Note: The legacy "Categories" sidebar and "Browse Courses" call-to-action on Home have been removed to simplify navigation.
+
 ## Getting Started
 
 1) Install dependencies:
