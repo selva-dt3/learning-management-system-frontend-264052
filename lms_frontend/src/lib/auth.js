@@ -109,6 +109,8 @@ export function AuthProvider({ children }) {
    *
    * Important: Navigation is guarded to only run when Router context exists.
    */
+  // eslint-disable-next-line no-console
+  console.log('[AuthProvider] mounted');
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [role, setRole] = useState('learner');

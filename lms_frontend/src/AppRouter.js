@@ -256,12 +256,18 @@ export default function AppRouter() {
     v7_relativeSplatPath: true,
   });
 
+  // Ensure RouterProvider (Router) wraps AuthProvider so any useNavigate in AuthProvider has router context.
+  // eslint-disable-next-line no-console
+  console.log('[ProviderOrder] Rendering: ErrorBoundary -> ToastProvider -> RouterProvider -> AuthProvider -> Routes');
+
   return (
     <ErrorBoundary>
       <ToastProvider>
-        <AuthProvider>
-          <RouterProvider router={router} />
-        </AuthProvider>
+        <RouterProvider router={router}>
+          <AuthProvider>
+            {/* App routes are rendered by RouterProvider internally via route objects */}
+          </AuthProvider>
+        </RouterProvider>
       </ToastProvider>
     </ErrorBoundary>
   );

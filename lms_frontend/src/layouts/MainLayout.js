@@ -3,6 +3,10 @@ import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import Header from '../components/Header';
 
+// Minimal runtime confirmation to help diagnose provider order
+// eslint-disable-next-line no-console
+console.debug?.('[Layout] MainLayout loaded');
+
 function NavbarLinks() {
   const { role } = useAuth();
   const isAdmin = role === 'admin';
