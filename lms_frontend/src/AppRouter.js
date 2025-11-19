@@ -25,6 +25,9 @@ import ProgressPage from './pages/hr/ProgressPage';
 /**
  * PUBLIC_INTERFACE
  * AppRouter is the main application component setting up routes and providers.
+ *
+ * Note: BrowserRouter wraps AuthProvider to ensure any useNavigate calls inside AuthProvider
+ * run within Router context.
  */
 export default function AppRouter() {
   useEffect(() => {
@@ -34,8 +37,8 @@ export default function AppRouter() {
   return (
     <ErrorBoundary>
       <ToastProvider>
-        <AuthProvider>
-          <BrowserRouter>
+        <BrowserRouter>
+          <AuthProvider>
             <MainLayout>
               <Routes>
                 <Route path="/" element={<HomePage />} />
@@ -153,8 +156,8 @@ export default function AppRouter() {
                 />
               </Routes>
             </MainLayout>
-          </BrowserRouter>
-        </AuthProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </ToastProvider>
     </ErrorBoundary>
   );

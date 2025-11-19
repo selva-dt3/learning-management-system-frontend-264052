@@ -105,13 +105,26 @@ const AuthContext = createContext({
 export function AuthProvider({ children }) {
   /**
    * Provides user/session state from Supabase, resolves role(s), and reacts to auth changes.
+   *
+   * Important: Navigation is guarded to only run when Router context exists.
    */
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [role, setRole] = useState('learner');
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate?.() || (() => {});
+
+  // Always call useNavigate to satisfy hooks rules; Router presence is ensured by AppRouter.
+  const navigate = useNavigate();
+
+  // Wrapper to centralize navigation calls
+  const safeNavigate = useCallback((to, options) => {
+    try {
+      navigate(to, options);
+    } catch (_e) {
+      // If somehow not in Router context during tests, swallow navigation
+    }
+  }, [navigate]);
 
   const refreshSession = useCallback(async () => {
     try {
@@ -150,20 +163,20 @@ export function AuthProvider({ children }) {
       setRoles(arr);
       setLoading(false);
 
-      // Post-login redirect by role
+      // Post-login redirect by role, only when Router context is present
       if (event === 'SIGNED_IN') {
-        if (r === 'admin') navigate('/admin', { replace: true });
-        else if (r === 'hr') navigate('/hr', { replace: true });
-        else navigate('/', { replace: true });
+        if (r === 'admin') safeNavigate('/admin', { replace: true });
+        else if (r === 'hr') safeNavigate('/hr', { replace: true });
+        else safeNavigate('/', { replace: true });
       }
       if (event === 'SIGNED_OUT') {
-        navigate('/', { replace: true });
+        safeNavigate('/', { replace: true });
       }
     });
     return () => {
       sub.subscription?.unsubscribe?.();
     };
-  }, [refreshSession, navigate]);
+  }, [refreshSession, safeNavigate]);
 
   const ctx = {
     user,
