@@ -26,6 +26,32 @@ export async function signInWithEmail(email, password) {
 
 /**
  * PUBLIC_INTERFACE
+ * signUpWithEmail
+ * Sign up with email/password. Uses emailRedirectTo if SITE_URL is configured by deployment.
+ */
+export async function signUpWithEmail(email, password) {
+  if (typeof email !== 'string' || typeof password !== 'string') {
+    throw new Error('Invalid input');
+  }
+  const trimmedEmail = email.trim();
+  const trimmedPassword = password.trim();
+  if (!trimmedEmail || !trimmedPassword) {
+    throw new Error('Email and password are required');
+  }
+  const options = {};
+  // If deployment maps SITE_URL to REACT_APP_FRONTEND_URL, you can set email redirect here.
+  if (process.env.REACT_APP_FRONTEND_URL) {
+    options.emailRedirectTo = process.env.REACT_APP_FRONTEND_URL;
+  }
+  const { data, error } = await supabase.auth.signUp({ email: trimmedEmail, password: trimmedPassword, options });
+  if (error) {
+    throw new Error(error.message || 'Unable to sign up');
+  }
+  return data?.user ?? null;
+}
+
+/**
+ * PUBLIC_INTERFACE
  * signOut
  */
 export async function signOut() {
@@ -61,7 +87,16 @@ export async function getUserRole() {
   return fetchUserRole(userId);
 }
 
-const AuthContext = createContext({ user: null, session: null, role: 'learner', loading: true });
+const AuthContext = createContext({
+  user: null,
+  session: null,
+  role: 'learner',
+  loading: true,
+  signInWithEmailPassword: async () => {},
+  signUpWithEmailPassword: async () => {},
+  signOut: async () => {},
+  refreshSession: async () => {}
+});
 
 // PUBLIC_INTERFACE
 export function AuthProvider({ children }) {
@@ -106,8 +141,20 @@ export function AuthProvider({ children }) {
     };
   }, [refreshSession]);
 
+  const ctx = {
+    user,
+    session,
+    role,
+    loading,
+    refreshSession,
+    // Context methods for UI consumption
+    signInWithEmailPassword: signInWithEmail,
+    signUpWithEmailPassword: signUpWithEmail,
+    signOut
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, role, loading, refreshSession }}>
+    <AuthContext.Provider value={ctx}>
       {children}
     </AuthContext.Provider>
   );
@@ -116,7 +163,7 @@ export function AuthProvider({ children }) {
 // PUBLIC_INTERFACE
 export function useAuth() {
   /**
-   * Hook that returns { user, session, role, loading, refreshSession }
+   * Hook that returns auth state and helpers.
    */
   return useContext(AuthContext);
 }

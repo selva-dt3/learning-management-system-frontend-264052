@@ -1,10 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * Supabase client configured from environment variables
- * Never hardcode secrets here. Uses:
+ * PUBLIC_INTERFACE
+ * supabase
+ * Supabase client configured from environment variables.
+ * It reads:
  * - REACT_APP_SUPABASE_URL
  * - REACT_APP_SUPABASE_KEY
+ * No secrets are logged; when missing, a generic warning is printed.
  */
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_KEY;
@@ -15,5 +18,4 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase is not configured. Please set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY.');
 }
 
-// PUBLIC_INTERFACE
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
