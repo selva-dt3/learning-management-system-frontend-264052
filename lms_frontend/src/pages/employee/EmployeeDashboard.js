@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { getCurrentUserAssignments } from '../../lib/services/employeeAssignments';
@@ -20,8 +20,8 @@ const EmployeeDashboard = () => {
   const [assignments, setAssignments] = useState([]);
   const [progressMap, setProgressMap] = useState({});
   const [error, setError] = useState('');
-  const [toast, setToast] = useState(null);
   const { notify } = useToast();
+  const mountedRef = useRef(true);
 
   const isAdminOrHr = useMemo(() => {
     const set = new Set((roles || []).map(r => r?.role || r));
@@ -29,59 +29,91 @@ const EmployeeDashboard = () => {
   }, [roles]);
 
   useEffect(() => {
-    let mounted = true;
+    mountedRef.current = true;
+    // eslint-disable-next-line no-console
+    console.debug?.('[EmployeeDashboard] effect:start', { hasUser: !!user, authLoading });
+
+    const abortController = new AbortController();
 
     async function load() {
-      if (!user) return;
+      if (!user) {
+        // eslint-disable-next-line no-console
+        console.debug?.('[EmployeeDashboard] no user, skipping fetch');
+        if (mountedRef.current) {
+          setAssignments([]);
+          setProgressMap({});
+          setLoading(false);
+        }
+        return;
+      }
       setLoading(true);
       setError('');
+
       try {
         // eslint-disable-next-line no-console
-        console.debug?.('[EmployeeDashboard] fetching assignments for user', { userId: user.id });
-        // RLS-friendly: backend filters based on auth.uid() in policies.
+        console.debug?.('[EmployeeDashboard] fetch:start assignments');
         const { data: assignmentsData, error: aErr, hint: aHint } = await getCurrentUserAssignments();
+
+        if (abortController.signal.aborted) return;
+
         if (aErr) {
           // eslint-disable-next-line no-console
           console.error('[EmployeeDashboard] assignments fetch error', aErr);
           throw new Error(`${aErr}${aHint ? ` | hint: ${aHint}` : ''}`);
         }
 
-        // Build initial progress map by fetching each assignment progress
+        const items = Array.isArray(assignmentsData) ? assignmentsData : [];
+
+        // In parallel, fetch progress for each assignment with allSettled to allow partial results
+        // eslint-disable-next-line no-console
+        console.debug?.('[EmployeeDashboard] fetch:start progress for assignments', { count: items.length });
+        const results = await Promise.allSettled(
+          items.map((a) => getProgressByAssignmentId(a.id))
+        );
+
+        if (abortController.signal.aborted) return;
+
         const map = {};
-        for (const a of assignmentsData || []) {
-          try {
-            const { data: pr, error: pErr, hint: pHint } = await getProgressByAssignmentId(a.id);
+        results.forEach((res, idx) => {
+          const a = items[idx];
+          if (res.status === 'fulfilled') {
+            const { data: pr, error: pErr, hint: pHint } = res.value || {};
             if (pErr) {
-              // do not fail the whole page, keep a row-level hint
               map[a.id] = { percent_complete: 0, status: 'not_started', _rowError: `${pErr}${pHint ? ` | ${pHint}` : ''}` };
             } else {
               map[a.id] = pr || { percent_complete: 0, status: 'not_started' };
             }
-          } catch (e) {
-            map[a.id] = { percent_complete: 0, status: 'not_started', _rowError: e.message };
+          } else {
+            map[a.id] = { percent_complete: 0, status: 'not_started', _rowError: res.reason?.message || 'progress fetch failed' };
           }
-        }
+        });
 
-        if (mounted) {
-          setAssignments(assignmentsData || []);
+        if (mountedRef.current) {
+          setAssignments(items);
           setProgressMap(map);
         }
       } catch (e) {
-        if (mounted) setError(e.message || 'Failed to load assignments.');
+        if (mountedRef.current) {
+          setError(e.message || 'Failed to load assignments.');
+          setAssignments([]); // show empty state on error
+          setProgressMap({});
+        }
       } finally {
-        if (mounted) setLoading(false);
+        if (mountedRef.current) {
+          setLoading(false);
+          // eslint-disable-next-line no-console
+          console.debug?.('[EmployeeDashboard] fetch:done');
+        }
       }
     }
 
-    if (!authLoading && user) {
+    if (!authLoading) {
       load();
-    } else if (!authLoading && !user) {
-      setLoading(false);
-      setAssignments([]);
     }
 
     return () => {
-      mounted = false;
+      abortController.abort();
+      mountedRef.current = false;
     };
   }, [user, authLoading]);
 
@@ -90,7 +122,7 @@ const EmployeeDashboard = () => {
       const percent = Math.max(0, Math.min(100, Number(nextPercent)));
       const status = percent >= 100 ? 'completed' : percent > 0 ? 'in_progress' : 'not_started';
 
-      const { data, error: uErr, hint } = await upsertProgress({
+      const { error: uErr, hint } = await upsertProgress({
         assignment_id: assignmentId,
         percent_complete: percent,
         status
@@ -128,8 +160,9 @@ const EmployeeDashboard = () => {
     return byCourse;
   }, [assignments]);
 
+  // Show delayed spinner while loading auth/session or dashboard data
   if (authLoading || loading) {
-    return <Loading label="Loading your dashboard..." timeoutMs={12000} troubleshooting />;
+    return <Loading label="Loading your dashboard..." timeoutMs={12000} troubleshooting initialDelayMs={250} />;
   }
 
   if (!user) {
@@ -247,8 +280,6 @@ const EmployeeDashboard = () => {
           </div>
         )}
       </div>
-
-
     </div>
   );
 };

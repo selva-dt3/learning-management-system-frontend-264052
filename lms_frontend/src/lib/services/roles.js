@@ -51,6 +51,8 @@ export async function fetchUserRole(userId) {
     logRlsVisibilityHint(userId, data, error);
 
     if (error) {
+      // eslint-disable-next-line no-console
+      console.debug?.('[roles] fetchUserRole:error returning default role');
       return DEFAULT_ROLE;
     }
 

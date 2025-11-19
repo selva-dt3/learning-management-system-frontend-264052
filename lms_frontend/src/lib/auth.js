@@ -279,15 +279,20 @@ export function useAuth() {
 export function ProtectedRoute({ children }) {
   /**
    * Simple protected route wrapper: redirects to /auth/login when unauthenticated.
+   * Only gates on session loading and presence; does not depend on roles length.
    */
   const { session, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
-    return <Loading />;
+    // eslint-disable-next-line no-console
+    console.debug?.('[ProtectedRoute] waiting for session');
+    return <Loading label="Loading..." initialDelayMs={250} timeoutMs={12000} troubleshooting />;
   }
 
   if (!session) {
+    // eslint-disable-next-line no-console
+    console.warn('[ProtectedRoute] no session -> redirect login');
     return <Navigate to="/auth/login" replace state={{ from: location }} />;
   }
 
@@ -316,7 +321,9 @@ export function RoleProtectedRoute({ children, allowedRoles = [] }) {
   });
 
   if (loading || rolesLoading) {
-    return <Loading label="Checking permissions..." timeoutMs={12000} troubleshooting />;
+    // eslint-disable-next-line no-console
+    console.debug?.('[RoleProtectedRoute] waiting for session/roles to settle');
+    return <Loading label="Checking permissions..." initialDelayMs={250} timeoutMs={12000} troubleshooting />;
   }
 
   if (!session) {

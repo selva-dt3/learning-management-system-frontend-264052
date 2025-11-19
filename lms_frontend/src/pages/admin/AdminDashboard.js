@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabaseClient';
@@ -40,11 +40,24 @@ export default function AdminDashboard() {
   const [seeding, setSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState(null);
 
-  useMemo(async () => {
-    // eslint-disable-next-line no-console
-    console.debug?.('[AdminDashboard] ensureTablesHint');
-    const w = await ensureTablesHint();
-    setHints(w);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        // eslint-disable-next-line no-console
+        console.debug?.('[AdminDashboard] ensureTablesHint:start');
+        const w = await ensureTablesHint();
+        if (!cancelled) setHints(w);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[AdminDashboard] ensureTablesHint:error', e?.message);
+        if (!cancelled) setHints([]);
+      } finally {
+        // eslint-disable-next-line no-console
+        console.debug?.('[AdminDashboard] ensureTablesHint:done');
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const onFileChange = (e) => {

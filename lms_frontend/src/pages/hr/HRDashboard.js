@@ -34,11 +34,32 @@ export default function HRDashboard() {
   const [perfLoading, setPerfLoading] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      setSetupHints(await ensureTablesHint());
-      const { data, error } = await listLessons({ q: '', page: 1, pageSize: 200 });
-      if (!error) setLessons(data || []);
+      try {
+        // eslint-disable-next-line no-console
+        console.debug?.('[HRDashboard] setup:start');
+        const hints = await ensureTablesHint();
+        if (!cancelled) setSetupHints(hints);
+        const { data, error } = await listLessons({ q: '', page: 1, pageSize: 200 });
+        if (!cancelled) {
+          if (!error) setLessons(data || []);
+          else {
+            // eslint-disable-next-line no-console
+            console.warn('[HRDashboard] listLessons error, defaulting to []');
+            setLessons([]);
+          }
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[HRDashboard] initial load error', e?.message);
+        if (!cancelled) setLessons([]);
+      } finally {
+        // eslint-disable-next-line no-console
+        console.debug?.('[HRDashboard] setup:done');
+      }
     })();
+    return () => { cancelled = true; };
   }, []);
 
   const validateAssign = () => {
@@ -91,18 +112,25 @@ export default function HRDashboard() {
   };
 
   const fetchPerf = async () => {
+    let cancelled = false;
     setPerfLoading(true);
-    // eslint-disable-next-line no-console
-    console.debug?.('[HRDashboard] listProgress call', { status: perfStatus });
-    const { data, error } = await listProgress({ status: perfStatus, page: 1, pageSize: 10 });
-    if (error) {
+    try {
       // eslint-disable-next-line no-console
-      console.warn('[HRDashboard] listProgress error (RLS?) returning []');
-      setPerfRows([]);
-    } else {
-      setPerfRows(data || []);
+      console.debug?.('[HRDashboard] listProgress call', { status: perfStatus });
+      const { data, error } = await listProgress({ status: perfStatus, page: 1, pageSize: 10 });
+      if (!cancelled) {
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.warn('[HRDashboard] listProgress error (RLS?) returning []');
+          setPerfRows([]);
+        } else {
+          setPerfRows(data || []);
+        }
+      }
+    } finally {
+      if (!cancelled) setPerfLoading(false);
     }
-    setPerfLoading(false);
+    return () => { cancelled = true; };
   };
 
   useEffect(() => {
@@ -248,7 +276,7 @@ export default function HRDashboard() {
         {perfLoading ? (
           <div>Loading...</div>
         ) : perfRows.length === 0 ? (
-          <div style={{ color: 'var(--oc-muted-text)' }}>No progress records</div>
+          <div style={{ color: 'var(--oc-muted-text)' }}>No progress records yet. Assign lessons or adjust filters.</div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
