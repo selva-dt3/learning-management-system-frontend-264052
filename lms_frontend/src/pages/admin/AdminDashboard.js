@@ -11,6 +11,7 @@ export default function AdminDashboard() {
   const { user, role } = useAuth();
 
   return (
+    // Page is guarded by RoleProtectedRoute in AppRouter (admin only).
     <div style={{ display: 'grid', gap: 16 }}>
       <div className="card" style={{ padding: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>

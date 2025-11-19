@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from './supabaseClient';
-import { Navigate, useLocation } from 'react-router-dom';
-import { fetchUserRole } from './services/roles';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { fetchUserRole, fetchUserRoles } from './services/roles';
+import Loading from '../components/Loading';
+import AccessDenied from '../components/AccessDenied';
 
 /**
  * PUBLIC_INTERFACE
@@ -91,6 +93,7 @@ const AuthContext = createContext({
   user: null,
   session: null,
   role: 'learner',
+  roles: [],
   loading: true,
   signInWithEmailPassword: async () => {},
   signUpWithEmailPassword: async () => {},
@@ -101,12 +104,14 @@ const AuthContext = createContext({
 // PUBLIC_INTERFACE
 export function AuthProvider({ children }) {
   /**
-   * Provides user/session state from Supabase, resolves role, and reacts to auth changes.
+   * Provides user/session state from Supabase, resolves role(s), and reacts to auth changes.
    */
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [role, setRole] = useState('learner');
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate?.() || (() => {});
 
   const refreshSession = useCallback(async () => {
     try {
@@ -114,13 +119,18 @@ export function AuthProvider({ children }) {
       setSession(current);
       const currentUser = current?.user ?? null;
       setUser(currentUser);
-      const r = await fetchUserRole(currentUser?.id);
+      const [r, arr] = await Promise.all([
+        fetchUserRole(currentUser?.id),
+        fetchUserRoles(currentUser?.id)
+      ]);
       setRole(r);
+      setRoles(arr);
     } catch (_e) {
       // avoid leaking sensitive data
       // eslint-disable-next-line no-console
       console.warn('Auth session fetch failed');
       setRole('learner');
+      setRoles([]);
     } finally {
       setLoading(false);
     }
@@ -128,23 +138,38 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     refreshSession();
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       setSession(newSession);
       const newUser = newSession?.user ?? null;
       setUser(newUser);
-      const r = await fetchUserRole(newUser?.id);
+      const [r, arr] = await Promise.all([
+        fetchUserRole(newUser?.id),
+        fetchUserRoles(newUser?.id)
+      ]);
       setRole(r);
+      setRoles(arr);
       setLoading(false);
+
+      // Post-login redirect by role
+      if (event === 'SIGNED_IN') {
+        if (r === 'admin') navigate('/admin', { replace: true });
+        else if (r === 'hr') navigate('/hr', { replace: true });
+        else navigate('/', { replace: true });
+      }
+      if (event === 'SIGNED_OUT') {
+        navigate('/', { replace: true });
+      }
     });
     return () => {
       sub.subscription?.unsubscribe?.();
     };
-  }, [refreshSession]);
+  }, [refreshSession, navigate]);
 
   const ctx = {
     user,
     session,
     role,
+    roles,
     loading,
     refreshSession,
     // Context methods for UI consumption
@@ -171,17 +196,17 @@ export function useAuth() {
 // PUBLIC_INTERFACE
 export function ProtectedRoute({ children }) {
   /**
-   * Simple protected route wrapper: redirects to /login when unauthenticated.
+   * Simple protected route wrapper: redirects to /auth/login when unauthenticated.
    */
   const { session, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
-    return <div className="container" style={{ padding: '2rem' }}>Loading...</div>;
+    return <Loading />;
   }
 
   if (!session) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/auth/login" replace state={{ from: location }} />;
   }
 
   return children;
@@ -191,33 +216,23 @@ export function ProtectedRoute({ children }) {
 export function RoleProtectedRoute({ children, allowedRoles = [] }) {
   /**
    * Role-based protected route wrapper: ensures user has one of allowedRoles.
-   * Unauthenticated users are redirected to /login.
-   * Authenticated but unauthorized users see a 403-style message.
+   * Unauthenticated users are redirected to /auth/login.
+   * Authenticated but unauthorized users see a friendly 403 message.
    */
   const { session, role, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
-    return <div className="container" style={{ padding: '2rem' }}>Loading...</div>;
+    return <Loading />;
   }
 
   if (!session) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/auth/login" replace state={{ from: location }} />;
   }
 
   const hasAccess = allowedRoles.length === 0 || allowedRoles.includes(role);
   if (!hasAccess) {
-    return (
-      <div className="container" style={{ padding: '2rem' }}>
-        <div className="card" style={{ padding: '1.25rem' }}>
-          <div className="badge" style={{ background: '#fff3f3', borderColor: 'var(--oc-error)', color: '#7f1d1d', marginBottom: 8 }}>403</div>
-          <h2 style={{ marginTop: 0 }}>Access denied</h2>
-          <p style={{ color: 'var(--oc-muted-text)' }}>
-            You do not have permission to view this page.
-          </p>
-        </div>
-      </div>
-    );
+    return <AccessDenied />;
   }
 
   return children;

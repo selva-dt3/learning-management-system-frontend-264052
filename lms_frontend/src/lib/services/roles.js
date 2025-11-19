@@ -2,55 +2,66 @@ import { supabase } from '../supabaseClient';
 
 /**
  * Role service: centralizes fetching and resolving user roles.
- * It first tries profiles table, falling back to user metadata if needed.
- * Never stores secrets; uses initialized Supabase client.
+ * Reads from public.user_roles (RLS protected) to get roles for the current user.
+ * Falls back gracefully to 'learner' if no roles or on errors.
  */
+
+// Helper to normalize role values
+function normalizeRole(role) {
+  if (typeof role !== 'string') return null;
+  const r = role.toLowerCase();
+  return ['admin', 'hr', 'learner'].includes(r) ? r : null;
+}
 
 // PUBLIC_INTERFACE
 export async function fetchUserRole(userId) {
   /**
-   * Fetches the user's role from the 'profiles' table or from user metadata.
-   * Returns one of: 'admin' | 'hr' | 'learner'
-   * Falls back to 'learner' for missing/invalid roles.
+   * Fetches the user's primary role.
+   * Priority: admin > hr > learner (default).
+   * Uses public.user_roles with RLS; expects rows like { user_id, role }.
    */
   const DEFAULT_ROLE = 'learner';
   if (!userId) return DEFAULT_ROLE;
 
   try {
-    // Attempt to read from profiles table where id = auth user id
     const { data, error } = await supabase
-      .from('profiles')
+      .from('user_roles')
       .select('role')
-      .eq('id', userId)
-      .single();
+      .eq('user_id', userId);
 
     if (error) {
-      // Silently fall back to metadata below
+      // Avoid logging sensitive info
       // eslint-disable-next-line no-console
-      console.warn('profiles role fetch failed (falling back to metadata)');
-    } else if (data && typeof data.role === 'string') {
-      const role = data.role.toLowerCase();
-      if (role === 'admin' || role === 'hr' || role === 'learner') {
-        return role;
-      }
+      console.warn('user_roles read failed');
+      return DEFAULT_ROLE;
     }
-  } catch (_e) {
-    // ignore and fall back
-  }
 
-  // Fallback: read from auth user metadata if available
+    const roles = Array.isArray(data) ? data.map(r => normalizeRole(r.role)).filter(Boolean) : [];
+    if (roles.includes('admin')) return 'admin';
+    if (roles.includes('hr')) return 'hr';
+    return DEFAULT_ROLE;
+  } catch (_e) {
+    return DEFAULT_ROLE;
+  }
+}
+
+// PUBLIC_INTERFACE
+export async function fetchUserRoles(userId) {
+  /**
+   * Returns an array of roles for the given user from public.user_roles.
+   * Gracefully returns [] when unauthenticated or when none found.
+   */
+  if (!userId) return [];
   try {
-    const { data: { user } = {} } = await supabase.auth.getUser();
-    const metaRole = user?.user_metadata?.role;
-    if (typeof metaRole === 'string') {
-      const role = metaRole.toLowerCase();
-      if (role === 'admin' || role === 'hr' || role === 'learner') {
-        return role;
-      }
-    }
-  } catch (_e) {
-    // ignore
-  }
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId);
 
-  return DEFAULT_ROLE;
+    if (error) return [];
+    const roles = Array.isArray(data) ? data.map(r => normalizeRole(r.role)).filter(Boolean) : [];
+    return Array.from(new Set(roles));
+  } catch (_e) {
+    return [];
+  }
 }

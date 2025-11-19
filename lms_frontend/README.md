@@ -1,14 +1,14 @@
 # LMS Frontend (React) — Ocean Professional
 
-A minimal LMS frontend scaffolded with routing, Ocean Professional theme, Supabase authentication, and role-based access control (RBAC).
+A minimal LMS frontend with routing, Ocean Professional theme, Supabase authentication, and RLS-backed role-based access control (RBAC).
 
 ## Features
-- Routing with react-router: `/`, `/courses`, `/courses/:id`, `/profile` (protected), `/auth/login`, `/auth/signup` (dedicated)
-- RBAC with Supabase: `/admin` (admin only), `/hr` (hr and admin)
-- Ocean Professional theme (modern, subtle shadows, rounded corners, gradients)
+- Routing with react-router: `/`, `/courses`, `/courses/:id`, `/profile` (protected), `/auth/login`, `/auth/signup`
+- RBAC with Supabase (RLS-backed from `public.user_roles`): `/admin` (admin only), `/hr` (hr and admin)
+- Ocean Professional theme (primary #2563EB, amber accents #F59E0B), subtle shadows, rounded corners
 - Supabase auth wiring (email/password), session-aware layout and role-aware navigation
-- Header with Sign In/Sign Up modals and Sign Out control
-- Placeholder pages: Home, Courses (search/filter UI), Course Details, Profile, Login
+- Contextual header links: HR/Admin links appear only if user has those roles
+- Placeholder pages: Home, Courses, Course Details, Profile
 - Dashboards: AdminDashboard and HRDashboard
 - Error Boundary and toast notifications
 - API client placeholder reading `REACT_APP_API_BASE`
@@ -38,77 +38,49 @@ Open http://localhost:3000
 - Required envs:
   - `REACT_APP_SUPABASE_URL` — e.g., `https://YOUR-REF.supabase.co`
   - `REACT_APP_SUPABASE_KEY` — anon/public key from your Supabase project
-
-### Added Auth UI
-- A session-aware Header is rendered globally. When signed out, it shows Sign In/Sign Up links to dedicated routes. When signed in, it shows the user email and Sign Out button.
-
-### Authentication Pages
-- `/auth/login` — Email/password sign in with validation, loading states, and error messaging.
-- `/auth/signup` — Email/password sign up with password confirmation, validation, and status messaging.
-- Both pages use the Ocean Professional theme (primary #2563EB, secondary #F59E0B), subtle shadows, rounded corners, and smooth transitions.
-- After successful auth, users are redirected to their previous destination (if any) or `/`.
-- Backward compatibility: `/login` continues to work and routes to the new login page.
-
-### Environment
-- Required:
-  - `REACT_APP_SUPABASE_URL`
-  - `REACT_APP_SUPABASE_KEY`
 - Optional:
-  - `REACT_APP_FRONTEND_URL` — sets Supabase emailRedirectTo during signup.
+  - `REACT_APP_FRONTEND_URL` — used to set emailRedirectTo during signup.
 
-## RBAC and Supabase Profiles
+## RBAC with Supabase RLS
 
-This app resolves the current user's role from the `profiles` table or, as a fallback, from the user metadata.
+This app resolves roles from `public.user_roles` with RLS enabled. Only SELECT is performed client-side.
 
-- Expected roles: `admin`, `hr`, `learner` (default)
-- Routes:
-  - `/admin` → requires `admin`
-  - `/hr` → requires `hr` or `admin`
+- Expected roles: `admin`, `hr`, `learner` (default fallback)
+- Table expectation (client is read-only):
+  - `public.user_roles(user_id uuid references auth.users(id), role text)`
+  - RLS policies must allow authenticated users to read their own rows.
+- Fetching:
+  - `src/lib/services/roles.js` reads all roles for the current user and normalizes them
+  - Primary role is chosen by priority: admin > hr > learner
+  - `fetchUserRoles(userId)` returns a unique array of roles
+- Guards:
+  - `ProtectedRoute` requires authentication; redirects to `/auth/login`
+  - `RoleProtectedRoute` requires role membership; shows a themed 403 (AccessDenied) when unauthorized
+- Redirects after login:
+  - If user has `admin` → `/admin`
+  - Else if `hr` → `/hr`
+  - Else → `/`
 - Navigation:
-  - "Admin" link appears only for `admin`
-  - "HR" link appears for `hr` and `admin`
+  - Header shows "HR" link when role is hr or admin
+  - Header shows "Admin" link when role is admin
 
-Auth context provides `{ user, session, role, loading, refreshSession }`.
-
-### Required Supabase Schema
-
-Create a `profiles` table linked to `auth.users`:
-
-```sql
-create table if not exists public.profiles (
-  id uuid primary key references auth.users (id) on delete cascade,
-  role text check (role in ('admin','hr','learner')) default 'learner'
-);
-```
-
-Enable RLS and allow reads for authenticated users:
-
-```sql
-alter table public.profiles enable row level security;
-
-create policy "Profiles are readable by authenticated users"
-on public.profiles
-for select
-to authenticated
-using (true);
-```
-
-For development convenience, the app treats missing roles as `learner`.
-
-(See the remainder of this README for suggested schema and RLS examples for employees, lessons, assignments, and progress.)
+Treat missing roles gracefully as `learner`.
 
 ## Key Files
 - `src/lib/supabaseClient.js` — Supabase client (uses REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY)
-- `src/lib/auth.js` — Auth helpers, `AuthProvider`/`useAuth`, `ProtectedRoute`, and `RoleProtectedRoute`
-- `src/components/Header.js` — session-aware header with auth controls
-- `src/lib/services/roles.js` — Role resolution logic
+- `src/lib/auth.js` — Auth provider and guards (ProtectedRoute, RoleProtectedRoute), role-aware redirects
+- `src/lib/services/roles.js` — RLS-backed role resolution from `public.user_roles`
+- `src/components/Header.js` — session-aware header with role-aware navigation
+- `src/components/Loading.js` — themed loading indicator
+- `src/components/AccessDenied.js` — themed 403 component
 
 ## Security
 - No secrets are hardcoded; environment-only configuration using:
   - `REACT_APP_SUPABASE_URL`
   - `REACT_APP_SUPABASE_KEY`
-- No sensitive data logged
+- No sensitive data is logged
 - Client-side input validation on auth forms
+- Note: Database schema/policies are not modified by this app; ensure RLS policies are configured server-side.
 
 ## Scripts
 - `npm start` — start development server
@@ -119,4 +91,5 @@ For development convenience, the app treats missing roles as `learner`.
 Important:
 - Ensure .env is not committed.
 - Provide valid Supabase URL and anon/public key.
+- Ensure user RLS policies allow reading own rows from public.user_roles.
 ```

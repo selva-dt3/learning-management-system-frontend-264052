@@ -5,13 +5,13 @@ import { useToast } from './Toast';
 
 /**
  * PUBLIC_INTERFACE
- * Header component showing session-aware actions:
+ * Header component showing session-aware actions and contextual role links.
  * - When unauthenticated: Sign In and Sign Up links to dedicated routes.
- * - When authenticated: show user email and Sign Out.
+ * - When authenticated: show user email, Admin/HR links (if authorized), and Sign Out.
  * Styling follows Ocean Professional theme variables.
  */
 export default function Header() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { notify } = useToast();
 
   const onSignOut = async () => {
@@ -22,6 +22,9 @@ export default function Header() {
       notify('Unable to sign out', 'error');
     }
   };
+
+  const isAdmin = role === 'admin';
+  const isHR = role === 'hr' || role === 'admin';
 
   return (
     <nav className="nav-gradient" style={{
@@ -35,10 +38,18 @@ export default function Header() {
         paddingTop: '0.75rem', paddingBottom: '0.75rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8, background: 'var(--oc-primary)', boxShadow: 'var(--oc-shadow-sm)'
-          }} />
+          <Link to="/" aria-label="Home">
+            <div style={{
+              width: 32, height: 32, borderRadius: 8, background: 'var(--oc-primary)', boxShadow: 'var(--oc-shadow-sm)'
+            }} />
+          </Link>
           <span style={{ fontWeight: 800, color: '#0f172a' }}>LMS</span>
+          {user && (
+            <div style={{ display: 'flex', gap: 10, marginLeft: 16 }}>
+              {isHR && <Link className="badge" to="/hr">HR</Link>}
+              {isAdmin && <Link className="badge" to="/admin">Admin</Link>}
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {!user && (
