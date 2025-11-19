@@ -14,17 +14,33 @@ export function ToastProvider({ children }) {
     }, timeout);
   }, []);
 
+  const ariaLive = (variant) => {
+    // errors should be assertive, others polite
+    return variant === 'error' ? 'assertive' : 'polite';
+  };
+
   return (
     <ToastContext.Provider value={{ notify }}>
       {children}
-      <div style={{
-        position: 'fixed', top: 16, right: 16, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 9999
-      }}>
+      <div
+        role="region"
+        aria-label="Notifications"
+        aria-live="polite"
+        style={{
+          position: 'fixed', top: 16, right: 16, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 9999
+        }}
+      >
         {toasts.map(t => (
-          <div key={t.id} className="card" style={{
-            padding: '0.75rem 1rem',
-            borderLeft: `4px solid ${t.variant === 'error' ? 'var(--oc-error)' : t.variant === 'success' ? 'var(--oc-success)' : 'var(--oc-primary)'}`
-          }}>
+          <div
+            key={t.id}
+            className="card"
+            role="status"
+            aria-live={ariaLive(t.variant)}
+            style={{
+              padding: '0.75rem 1rem',
+              borderLeft: `4px solid ${t.variant === 'error' ? 'var(--oc-error)' : t.variant === 'success' ? 'var(--oc-success)' : 'var(--oc-primary)'}`
+            }}
+          >
             <div style={{ fontWeight: 600, marginBottom: 2, color: '#111827' }}>
               {t.variant === 'error' ? 'Error' : t.variant === 'success' ? 'Success' : 'Notice'}
             </div>

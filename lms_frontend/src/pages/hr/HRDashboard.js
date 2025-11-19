@@ -45,7 +45,7 @@ export default function HRDashboard() {
     const v = {};
     const email = String(assigneeEmail || '').trim();
     if (!email) v.email = 'Email is required';
-    else if (!/^\S+@\S+\.\S+$/.test(email)) v.email = 'Enter a valid email';
+    else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email)) v.email = 'Enter a valid email';
     if (!String(courseId).trim()) v.courseId = 'Course ID is required';
     if (!String(lessonId).trim()) v.lessonId = 'Lesson is required';
     setAssignErrors(v);

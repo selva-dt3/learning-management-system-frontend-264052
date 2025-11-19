@@ -50,6 +50,16 @@ export default function AdminDashboard() {
   const onFileChange = (e) => {
     const f = e.target.files?.[0] || null;
     setForm((prev) => ({ ...prev, file: f }));
+    if (f) {
+      // immediate lightweight validation feedback
+      const name = f.name.toLowerCase();
+      const sizeMB = f.size / (1024 * 1024);
+      const v = {};
+      if (form.contentType === 'pdf' && !name.endsWith('.pdf')) v.file = 'Upload a .pdf file';
+      if (form.contentType === 'video' && !(/\.(mp4|webm|mov|m4v)$/i.test(name))) v.file = 'Upload a video file (mp4, webm, mov, m4v)';
+      if (sizeMB > 50) v.file = 'File too large (max 50MB)';
+      setValidation((prev) => ({ ...prev, ...v }));
+    }
   };
 
   const validate = () => {
@@ -65,8 +75,10 @@ export default function AdminDashboard() {
       if (!(form.file instanceof File)) v.file = 'Please select a file to upload';
       else {
         const name = form.file.name.toLowerCase();
+        const sizeMB = form.file.size / (1024 * 1024);
         if (form.contentType === 'pdf' && !name.endsWith('.pdf')) v.file = 'Upload a .pdf file';
         if (form.contentType === 'video' && !(/\.(mp4|webm|mov|m4v)$/i.test(name))) v.file = 'Upload a video file (mp4, webm, mov, m4v)';
+        if (sizeMB > 50) v.file = 'File too large (max 50MB)';
       }
     }
     setValidation(v);

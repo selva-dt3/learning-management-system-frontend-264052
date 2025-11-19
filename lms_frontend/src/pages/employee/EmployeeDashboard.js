@@ -214,10 +214,21 @@ const EmployeeDashboard = () => {
                               type="number"
                               min={0}
                               max={100}
+                              step={1}
+                              inputMode="numeric"
                               defaultValue={pr.percent_complete || 0}
                               onBlur={(e) => handleUpdateProgress(a.id, e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleUpdateProgress(a.id, e.currentTarget.value);
+                                }
+                              }}
                               className="w-24 border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                               aria-label="Update progress percentage"
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                              aria-valuenow={Number(pr.percent_complete || 0)}
                             />
                             <button
                               onClick={() => handleUpdateProgress(a.id, 100)}

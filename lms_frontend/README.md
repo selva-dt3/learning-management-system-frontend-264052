@@ -15,10 +15,13 @@ A minimal LMS frontend with routing, Ocean Professional theme, Supabase authenti
 - API client placeholder reading `REACT_APP_API_BASE`
 
 New in this update:
-- Admin: Quick-create Lesson form on Admin Dashboard with Supabase Storage uploads (PDF/Video) or external link, resources array, and metadata persisted to lessons table.
-- HR: Assign-by-email form and Performance snapshot embedded in HR Dashboard, using Supabase tables (assignments, progress).
-- Employee: Self dashboard at /employee showing assigned lessons grouped by course, progress bar, and actions to update progress.
+- Admin: Quick-create Lesson form on Admin Dashboard with Supabase Storage uploads (PDF/Video) or external link, resources array, and metadata persisted to lessons table. File validation added (type, size up to 50MB). Accessible labels and errors.
+- Admin Lessons List: Sorting (click column headers; Enter key supports keyboard), client-side type filter, pagination, inline edits for title/description/type, confirm delete with asset reference cleanup note, and clearer success/error toasts.
+- HR: Assign-by-email form and Performance snapshot embedded in HR Dashboard, using Supabase tables (assignments, progress). Email validation strengthened.
+- HR Assignments: Filters by status/employee/lesson, keyboard-sortable headers, inline status edit, bulk delete with confirmation, pagination, and improved toasts.
+- Employee: Self dashboard at /employee showing assigned lessons grouped by course, progress bar, quick actions to update progress with optimistic update and rollback on error, and empty states.
 - Admin: Seed Demo Data utility to populate courses, lessons, assignments (and optional progress) in Supabase with idempotent UPSERTs.
+- Accessibility: Toasts now use aria-live (assertive for errors, polite for others), table headers are keyboard operable (press Enter to sort), inputs have associated labels. Employee progress input supports Enter to save and includes min/max/step with numeric input mode.
 
 Note: The legacy "Categories" sidebar and "Browse Courses" call-to-action on Home have been removed to simplify navigation.
 

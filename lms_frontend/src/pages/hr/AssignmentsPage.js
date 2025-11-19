@@ -9,6 +9,12 @@ import { useToast } from '../../components/Toast';
  * PUBLIC_INTERFACE
  * AssignmentsPage - HR can view/filter assignments, update status, and delete.
  * Provides links to create new and edit specific assignment.
+ * Improvements:
+ * - Filters by status/employee/lesson
+ * - Keyboard-accessible sortable headers
+ * - Inline status edit
+ * - Bulk select and delete with confirmation
+ * - Pagination and clearer success/error toasts
  */
 export default function AssignmentsPage() {
   const { notify } = useToast();
@@ -16,14 +22,18 @@ export default function AssignmentsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [rows, setRows] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [count, setCount] = useState(0);
   const pageSize = 10;
 
-  const [q] = useState(searchParams.get('q') || ''); // no-op currently
+  const [q] = useState(searchParams.get('q') || ''); // no-op for now, placeholder for future
   const [status, setStatus] = useState(searchParams.get('status') || 'all');
   const [employeeId, setEmployeeId] = useState(searchParams.get('employeeId') || '');
   const [lessonId, setLessonId] = useState(searchParams.get('lessonId') || '');
   const [page, setPage] = useState(Number(searchParams.get('page') || 1));
+  const [sortKey, setSortKey] = useState(searchParams.get('sort') || 'assigned_at');
+  const [sortDir, setSortDir] = useState(searchParams.get('dir') || 'desc');
+
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
 
@@ -38,10 +48,12 @@ export default function AssignmentsPage() {
       status ? next.set('status', status) : next.delete('status');
       employeeId ? next.set('employeeId', employeeId) : next.delete('employeeId');
       lessonId ? next.set('lessonId', lessonId) : next.delete('lessonId');
+      next.set('sort', sortKey);
+      next.set('dir', sortDir);
       next.set('page', String(page));
       return next;
     });
-  }, [status, employeeId, lessonId, page, setSearchParams]);
+  }, [status, employeeId, lessonId, page, sortKey, sortDir, setSearchParams]);
 
   const fetchFilters = async () => {
     // Fetch a small list of employees and lessons for dropdowns
@@ -82,21 +94,6 @@ export default function AssignmentsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, status, employeeId, lessonId, page]);
 
-  const onDelete = async (id) => {
-    const ok = window.confirm('Delete this assignment?');
-    if (!ok) return;
-    const prev = rows;
-    setRows((r) => r.filter((x) => x.id !== id));
-    const { error } = await deleteAssignment(id);
-    if (error) {
-      notify('Delete failed', 'error');
-      setRows(prev);
-    } else {
-      notify('Assignment deleted', 'success');
-      fetchRows();
-    }
-  };
-
   const onInlineStatusChange = async (id, value) => {
     const prev = rows;
     setRows((r) => r.map((x) => (x.id === id ? { ...x, status: value } : x)));
@@ -109,6 +106,68 @@ export default function AssignmentsPage() {
     }
   };
 
+  const onDelete = async (id) => {
+    const ok = window.confirm('Delete this assignment?');
+    if (!ok) return;
+    const prev = rows;
+    setRows((r) => r.filter((x) => x.id !== id));
+    const { error } = await deleteAssignment(id);
+    if (error) {
+      notify('Delete failed. Check RLS policies.', 'error');
+      setRows(prev);
+    } else {
+      notify('Assignment deleted', 'success');
+      fetchRows();
+    }
+  };
+
+  const onBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      notify('No assignments selected', 'info');
+      return;
+    }
+    const ok = window.confirm(`Delete ${selectedIds.length} selected assignment(s)?`);
+    if (!ok) return;
+    const prev = rows;
+    setRows((r) => r.filter((x) => !selectedIds.includes(x.id)));
+    let hadError = false;
+    for (const id of selectedIds) {
+      // eslint-disable-next-line no-await-in-loop
+      const { error } = await deleteAssignment(id);
+      if (error) hadError = true;
+    }
+    setSelectedIds([]);
+    if (hadError) {
+      notify('Some deletions failed. Check permissions.', 'error');
+      setRows(prev); // rollback to be safe; then refetch
+    } else {
+      notify('Selected assignments deleted', 'success');
+    }
+    fetchRows();
+  };
+
+  const toggleSort = (key) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedRows = useMemo(() => {
+    const data = [...rows];
+    const k = sortKey;
+    data.sort((a, b) => {
+      const av = a[k] ?? '';
+      const bv = b[k] ?? '';
+      if (av < bv) return sortDir === 'asc' ? -1 : 1;
+      if (av > bv) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return data;
+  }, [rows, sortKey, sortDir]);
+
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div className="card" style={{ padding: '1rem' }}>
@@ -119,7 +178,10 @@ export default function AssignmentsPage() {
               Assign lessons to employees and manage due dates and status.
             </div>
           </div>
-          <Link to="/hr/assignments/new" className="btn">New Assignment</Link>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-secondary" onClick={onBulkDelete} aria-label="Bulk delete selected assignments">Bulk Delete</button>
+            <Link to="/hr/assignments/new" className="btn">New Assignment</Link>
+          </div>
         </div>
       </div>
 
@@ -172,7 +234,7 @@ export default function AssignmentsPage() {
           <div style={{ padding: '1rem' }}>Loading...</div>
         ) : loadError ? (
           <div style={{ padding: '1rem', color: 'var(--oc-error)' }}>{loadError}</div>
-        ) : rows.length === 0 ? (
+        ) : sortedRows.length === 0 ? (
           <div style={{ padding: '1rem', color: 'var(--oc-muted-text)' }}>
             No assignments found. Use "New Assignment" to create one.
           </div>
@@ -181,17 +243,61 @@ export default function AssignmentsPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ textAlign: 'left' }}>
-                  <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Employee</th>
-                  <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Lesson</th>
-                  <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Assigned At</th>
-                  <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Due Date</th>
+                  <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>
+                    <input
+                      type="checkbox"
+                      aria-label="Select all rows"
+                      checked={selectedIds.length > 0 && selectedIds.length === sortedRows.length}
+                      onChange={(e) => setSelectedIds(e.target.checked ? sortedRows.map(r => r.id) : [])}
+                    />
+                  </th>
+                  <th
+                    tabIndex={0}
+                    onClick={() => toggleSort('employee_id')}
+                    onKeyDown={(e)=> e.key==='Enter' && toggleSort('employee_id')}
+                    style={{ padding: 10, borderBottom: '1px solid var(--oc-border)', cursor: 'pointer' }}
+                  >
+                    Employee {sortKey==='employee_id' ? (sortDir==='asc'?'▲':'▼'):''}
+                  </th>
+                  <th
+                    tabIndex={0}
+                    onClick={() => toggleSort('lesson_id')}
+                    onKeyDown={(e)=> e.key==='Enter' && toggleSort('lesson_id')}
+                    style={{ padding: 10, borderBottom: '1px solid var(--oc-border)', cursor: 'pointer' }}
+                  >
+                    Lesson {sortKey==='lesson_id' ? (sortDir==='asc'?'▲':'▼'):''}
+                  </th>
+                  <th
+                    tabIndex={0}
+                    onClick={() => toggleSort('assigned_at')}
+                    onKeyDown={(e)=> e.key==='Enter' && toggleSort('assigned_at')}
+                    style={{ padding: 10, borderBottom: '1px solid var(--oc-border)', cursor: 'pointer' }}
+                  >
+                    Assigned At {sortKey==='assigned_at' ? (sortDir==='asc'?'▲':'▼'):''}
+                  </th>
+                  <th
+                    tabIndex={0}
+                    onClick={() => toggleSort('due_date')}
+                    onKeyDown={(e)=> e.key==='Enter' && toggleSort('due_date')}
+                    style={{ padding: 10, borderBottom: '1px solid var(--oc-border)', cursor: 'pointer' }}
+                  >
+                    Due Date {sortKey==='due_date' ? (sortDir==='asc'?'▲':'▼'):''}
+                  </th>
                   <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Status</th>
                   <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }} />
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {sortedRows.map((r) => (
                   <tr key={r.id}>
+                    <td style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Select assignment ${r.id}`}
+                        checked={selectedIds.includes(r.id)}
+                        onChange={(e) => setSelectedIds((prev) => e.target.checked ? [...new Set([...prev, r.id])] : prev.filter(x=>x!==r.id))}
+                      />
+                    </td>
                     <td style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>{r.employee_id}</td>
                     <td style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>{r.lesson_id}</td>
                     <td style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>{r.assigned_at ? new Date(r.assigned_at).toLocaleString() : ''}</td>

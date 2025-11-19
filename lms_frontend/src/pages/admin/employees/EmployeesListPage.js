@@ -95,21 +95,21 @@ export default function EmployeesListPage() {
 
       <div className="card" style={{ padding: '0.5rem' }}>
         {loading ? (
-          <div style={{ padding: '1rem' }}>Loading...</div>
+          <div style={{ padding: '1rem' }} role="status" aria-live="polite">Loading...</div>
         ) : loadError ? (
-          <div style={{ padding: '1rem', color: 'var(--oc-error)' }}>{loadError}</div>
+          <div style={{ padding: '1rem', color: 'var(--oc-error)' }} role="alert" aria-live="assertive">{loadError}</div>
         ) : rows.length === 0 ? (
-          <div style={{ padding: '1rem', color: 'var(--oc-muted-text)' }}>No employees found.</div>
+          <div style={{ padding: '1rem', color: 'var(--oc-muted-text)' }} aria-live="polite">No employees found.</div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ textAlign: 'left' }}>
-                  <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Name</th>
-                  <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Email</th>
-                  <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Department</th>
-                  <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Role</th>
-                  <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Status</th>
+                  <th tabIndex={0} style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Name</th>
+                  <th tabIndex={0} style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Email</th>
+                  <th tabIndex={0} style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Department</th>
+                  <th tabIndex={0} style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Role</th>
+                  <th tabIndex={0} style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }}>Status</th>
                   <th style={{ padding: 10, borderBottom: '1px solid var(--oc-border)' }} />
                 </tr>
               </thead>
