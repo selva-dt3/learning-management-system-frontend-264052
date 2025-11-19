@@ -116,15 +116,20 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);       // session/user loading
   const [rolesLoading, setRolesLoading] = useState(true); // roles loading to avoid race conditions
 
-  // Always call useNavigate to satisfy hooks rules; Router presence is ensured by AppRouter.
+  // Always call useNavigate to satisfy hooks rules; Router presence will be ensured by AppRouter
+  // where RouterProvider wraps AuthProvider. However, in test or edge boot sequences the
+  // router might not yet be mounted. Use a guarded navigate wrapper that no-ops on failure.
   const navigate = useNavigate();
 
-  // Wrapper to centralize navigation calls
+  // Wrapper to centralize navigation calls and avoid throwing if Router isn't ready yet.
   const safeNavigate = useCallback((to, options) => {
+    if (!to) return;
     try {
       navigate(to, options);
     } catch (_e) {
-      // swallow during tests if Router not present
+      // In case Router isn't mounted yet (e.g., tests), safely no-op.
+      // eslint-disable-next-line no-console
+      console.warn('[Auth] safeNavigate skipped (router not ready)');
     }
   }, [navigate]);
 

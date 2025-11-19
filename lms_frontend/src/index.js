@@ -3,6 +3,13 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 
-// Render the application
+/**
+ * Entry point: renders App which mounts AppRouter.
+ * RouterProvider is configured inside AppRouter to wrap AuthProvider.
+ */
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

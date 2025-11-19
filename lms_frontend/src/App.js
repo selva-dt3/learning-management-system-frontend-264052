@@ -5,6 +5,7 @@ import AppRouter from './AppRouter';
 function App() {
   /**
    * Root component that delegates to AppRouter.
+   * AppRouter ensures RouterProvider wraps AuthProvider to satisfy useNavigate context.
    */
   return <AppRouter />;
 }

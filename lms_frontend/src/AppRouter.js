@@ -253,10 +253,13 @@ export default function AppRouter() {
   return (
     <ErrorBoundary>
       <ToastProvider>
-        {/* Provide Auth context at the top level to preserve existing behavior */}
-        <AuthProvider>
-          <RouterProvider router={router} />
-        </AuthProvider>
+        {/* RouterProvider MUST wrap AuthProvider to ensure useNavigate has Router context */}
+        <RouterProvider router={router}>
+          <AuthProvider>
+            {/* Children of AuthProvider are rendered by the route elements within RouterProvider */}
+            {/* MainLayout and route elements are defined in the router above */}
+          </AuthProvider>
+        </RouterProvider>
       </ToastProvider>
     </ErrorBoundary>
   );
