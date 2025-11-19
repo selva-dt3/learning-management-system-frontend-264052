@@ -3,11 +3,12 @@
 A minimal LMS frontend with routing, Ocean Professional theme, Supabase authentication, and RLS-backed role-based access control (RBAC).
 
 ## Features
-- Routing with react-router: `/`, `/courses`, `/courses/:id`, `/profile` (protected), `/auth/login`, `/auth/signup`
+- Routing with react-router: `/`, `/courses`, `/courses/:id`, `/profile` (protected), `/auth/login`
 - RBAC with Supabase (RLS-backed from `public.user_roles`): `/admin` (admin only), `/hr` (hr and admin)
 - Ocean Professional theme (primary #2563EB, amber accents #F59E0B), subtle shadows, rounded corners
 - Supabase auth wiring (email/password), session-aware layout and role-aware navigation
 - Contextual header links: HR/Admin links appear only if user has those roles
+- Role-specific sign-in shortcuts in header and home page: "Admin Sign In", "HR Sign In", "Employee Sign In"
 - Placeholder pages: Home, Courses, Course Details, Profile
 - Dashboards: AdminDashboard and HRDashboard
 - Error Boundary and toast notifications
@@ -38,8 +39,15 @@ Open http://localhost:3000
 - Required envs:
   - `REACT_APP_SUPABASE_URL` — e.g., `https://YOUR-REF.supabase.co`
   - `REACT_APP_SUPABASE_KEY` — anon/public key from your Supabase project
-- Optional:
-  - `REACT_APP_FRONTEND_URL` — used to set emailRedirectTo during signup.
+
+## Sign-in and Roles
+
+- Sign-in only; signup is disabled. The UI presents three dedicated sign-in buttons:
+  - Admin Sign In → `/auth/login?role=admin`
+  - HR Sign In → `/auth/login?role=hr`
+  - Employee Sign In → `/auth/login?role=employee`
+- The login page reads `?role=` and updates its title/subtext accordingly, but authentication remains email/password via Supabase.
+- The `/auth/signup` path is disabled and redirects to `/auth/login` (any provided query params are preserved).
 
 ## RBAC with Supabase RLS
 
@@ -69,7 +77,7 @@ Treat missing roles gracefully as `learner`.
 - `src/lib/supabaseClient.js` — Supabase client (uses REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY)
 - `src/lib/auth.js` — Auth provider and guards (ProtectedRoute, RoleProtectedRoute), role-aware redirects
 - `src/lib/services/roles.js` — RLS-backed role resolution from `public.user_roles`
-- `src/components/Header.js` — session-aware header with role-aware navigation
+- `src/components/Header.js` — session-aware header with role-aware navigation and role-specific sign-in buttons
 - `src/components/Loading.js` — themed loading indicator
 - `src/components/AccessDenied.js` — themed 403 component
 
@@ -91,4 +99,5 @@ Important:
 - Ensure .env is not committed.
 - Provide valid Supabase URL and anon/public key.
 - Ensure user RLS policies allow reading own rows from public.user_roles.
+- Signup flows are disabled; use the sign-in buttons and provision accounts via your identity provider or admin.
 ```

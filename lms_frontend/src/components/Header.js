@@ -6,7 +6,7 @@ import { useToast } from './Toast';
 /**
  * PUBLIC_INTERFACE
  * Header component showing session-aware actions and contextual role links.
- * - When unauthenticated: Sign In and Sign Up links to dedicated routes.
+ * - When unauthenticated: three role-specific sign-in buttons (Admin, HR, Employee) that link to /auth/login?role=...
  * - When authenticated: show user email, Admin/HR links (if authorized), and Sign Out.
  * Styling follows Ocean Professional theme variables.
  */
@@ -58,11 +58,12 @@ export default function Header() {
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {!user && (
             <>
-              <Link className="btn btn-secondary" to="/auth/login">Sign In</Link>
-              <Link className="btn" to="/auth/signup">Sign Up</Link>
+              <Link className="btn btn-secondary" to="/auth/login?role=admin" aria-label="Admin Sign In">Admin Sign In</Link>
+              <Link className="btn btn-secondary" to="/auth/login?role=hr" aria-label="HR Sign In">HR Sign In</Link>
+              <Link className="btn" to="/auth/login?role=employee" aria-label="Employee Sign In">Employee Sign In</Link>
             </>
           )}
           {user && (

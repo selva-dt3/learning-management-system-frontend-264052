@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, signInWithEmail } from '../../lib/auth';
 import { useToast } from '../../components/Toast';
 
 /**
  * PUBLIC_INTERFACE
  * Login - Dedicated login page using Supabase auth via existing auth helpers.
- * Provides email/password form with validation, loading and error state, and redirects after login.
+ * Reads ?role=admin|hr|employee from query parameters to adjust UI text, but authentication remains email/password.
+ * Signup paths are intentionally hidden/disabled.
  */
 export default function Login() {
   const { session } = useAuth();
@@ -14,6 +15,10 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
+
+  const search = new URLSearchParams(location.search || '');
+  const qpRole = (search.get('role') || '').toLowerCase();
+  const roleHint = qpRole === 'admin' || qpRole === 'hr' || qpRole === 'employee' ? qpRole : '';
 
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -49,7 +54,7 @@ export default function Login() {
       setSubmitting(true);
       await signInWithEmail(form.email, form.password);
       notify('Signed in successfully', 'success');
-      // Do not navigate immediately; let AuthProvider handle role-aware redirect
+      // AuthProvider will handle role-based redirects after roles load.
       // eslint-disable-next-line no-console
       console.debug?.('[Login] sign-in initiated, waiting for AuthProvider redirect');
     } catch (_err) {
@@ -60,14 +65,23 @@ export default function Login() {
     }
   };
 
+  const title = roleHint === 'admin' ? 'Admin Sign In'
+    : roleHint === 'hr' ? 'HR Sign In'
+    : roleHint === 'employee' ? 'Employee Sign In'
+    : 'Sign In';
+
+  const subtitle = roleHint
+    ? `Sign in to continue as ${roleHint}.`
+    : 'Access your learning dashboard.';
+
   return (
     <div className="container" style={{ display: 'flex', justifyContent: 'center' }}>
       <div className="card" style={{ padding: '1.25rem', width: '100%', maxWidth: 480, marginTop: '2rem' }}>
         <div style={{ marginBottom: 12 }}>
           <div className="badge" style={{ marginBottom: 8 }}>Welcome back</div>
-          <h2 style={{ margin: 0 }}>Sign in</h2>
+          <h2 style={{ margin: 0 }}>{title}</h2>
           <p style={{ color: 'var(--oc-muted-text)', marginTop: 6 }}>
-            Access your learning dashboard.
+            {subtitle}
           </p>
         </div>
 
@@ -116,10 +130,6 @@ export default function Login() {
             </button>
           </div>
         </form>
-
-        <div style={{ marginTop: 12, color: 'var(--oc-muted-text)' }}>
-          Don’t have an account? <Link to="/auth/signup">Create one</Link>
-        </div>
       </div>
     </div>
   );

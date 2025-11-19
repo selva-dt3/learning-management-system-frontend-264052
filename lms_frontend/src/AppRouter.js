@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
 import CoursesPage from './pages/CoursesPage';
@@ -45,9 +45,12 @@ export default function AppRouter() {
                 <Route path="/courses" element={<CoursesPage />} />
                 <Route path="/courses/:id" element={<CourseDetailsPage />} />
                 <Route path="/auth/login" element={<Login />} />
+                {/* Keep /auth/signup but it redirects to /auth/login via component */}
                 <Route path="/auth/signup" element={<Signup />} />
                 {/* Backward compatibility: keep /login pointing to new page */}
                 <Route path="/login" element={<Login />} />
+                {/* Defensive: if /signup (without /auth) is tried, redirect to login */}
+                <Route path="/signup" element={<Navigate to="/auth/login" replace />} />
 
                 <Route
                   path="/profile"

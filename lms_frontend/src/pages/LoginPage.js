@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { signInWithEmail, useAuth } from '../lib/auth';
 import { useToast } from '../components/Toast';
@@ -10,6 +10,10 @@ export default function LoginPage() {
   const location = useLocation();
   const { notify } = useToast();
   const from = location.state?.from?.pathname || '/';
+
+  const search = new URLSearchParams(location.search || '');
+  const qpRole = (search.get('role') || '').toLowerCase();
+  const roleHint = qpRole === 'admin' || qpRole === 'hr' || qpRole === 'employee' ? qpRole : '';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -51,9 +55,14 @@ export default function LoginPage() {
     }
   };
 
+  const title = roleHint === 'admin' ? 'Admin Sign In'
+    : roleHint === 'hr' ? 'HR Sign In'
+    : roleHint === 'employee' ? 'Employee Sign In'
+    : 'Sign in';
+
   return (
     <div className="card" style={{ padding: '1.25rem', maxWidth: 440, margin: '0 auto' }}>
-      <h2 style={{ marginTop: 0, marginBottom: 8 }}>Sign in</h2>
+      <h2 style={{ marginTop: 0, marginBottom: 8 }}>{title}</h2>
       <p style={{ color: 'var(--oc-muted-text)', marginTop: 0, marginBottom: 16 }}>
         Enter your email and password to access your account.
       </p>

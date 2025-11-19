@@ -12,12 +12,16 @@ export default function HomePage() {
       <p style={{ color: 'var(--oc-muted-text)' }}>
         Explore courses, track your progress, and enhance your skills.
       </p>
-      <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+      <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
         <Link to="/courses" className="btn">Browse Courses</Link>
         {user?.email ? (
           <Link to="/profile" className="btn btn-secondary">Go to Profile</Link>
         ) : (
-          <Link to="/auth/login" className="btn btn-secondary">Sign In</Link>
+          <>
+            <Link to="/auth/login?role=admin" className="btn btn-secondary">Admin Sign In</Link>
+            <Link to="/auth/login?role=hr" className="btn btn-secondary">HR Sign In</Link>
+            <Link to="/auth/login?role=employee" className="btn">Employee Sign In</Link>
+          </>
         )}
       </div>
     </div>
