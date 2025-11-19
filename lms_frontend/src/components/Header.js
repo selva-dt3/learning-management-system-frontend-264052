@@ -32,6 +32,7 @@ export default function Header() {
 
   const isAdmin = role === 'admin';
   const isHR = role === 'hr' || role === 'admin';
+  const showEmployeeLink = !!user && !(role === 'admin' || role === 'hr');
 
   return (
     <nav className="nav-gradient" style={{
@@ -68,6 +69,9 @@ export default function Header() {
           )}
           {user && (
             <>
+              {showEmployeeLink && (
+                <Link className="btn" to="/employee" aria-label="My Dashboard">My Dashboard</Link>
+              )}
               <span className="badge" aria-label="Signed in email" title={user.email}>{user.email}</span>
               <button className="btn btn-secondary" onClick={onSignOut} disabled={signingOut}>
                 {signingOut ? 'Signing out…' : 'Sign Out'}

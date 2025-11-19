@@ -21,6 +21,7 @@ import LessonFormPage from './pages/admin/lessons/LessonFormPage';
 import AssignmentsPage from './pages/hr/AssignmentsPage';
 import AssignmentFormPage from './pages/hr/AssignmentFormPage';
 import ProgressPage from './pages/hr/ProgressPage';
+import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 
 /**
  * PUBLIC_INTERFACE
@@ -57,6 +58,15 @@ export default function AppRouter() {
                   element={
                     <ProtectedRoute>
                       <ProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/employee"
+                  element={
+                    <ProtectedRoute>
+                      <EmployeeDashboard />
                     </ProtectedRoute>
                   }
                 />

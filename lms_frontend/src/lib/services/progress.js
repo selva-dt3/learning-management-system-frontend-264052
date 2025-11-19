@@ -34,6 +34,26 @@ export async function listProgress({ employeeId = '', lessonId = '', status = 'a
   }
 }
 
+/**
+ * PUBLIC_INTERFACE
+ * getProgressByAssignmentId
+ * Fetch progress by assignment id if the schema links progress to assignment_id.
+ * If your schema uses user_id + lesson_id, adapt EmployeeDashboard to call listProgress or another helper.
+ */
+export async function getProgressByAssignmentId(assignmentId) {
+  try {
+    const { data, error } = await supabase
+      .from('progress')
+      .select('*')
+      .eq('assignment_id', assignmentId)
+      .maybeSingle();
+    if (error) return { data: null, error, hint: 'Ensure progress table has assignment_id and RLS allows SELECT.' };
+    return { data, error: null, hint: null };
+  } catch (_e) {
+    return { data: null, error: new Error('Unable to fetch progress for assignment'), hint: null };
+  }
+}
+
 // PUBLIC_INTERFACE
 export async function upsertProgress(payload) {
   /**

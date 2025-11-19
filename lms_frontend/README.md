@@ -17,6 +17,7 @@ A minimal LMS frontend with routing, Ocean Professional theme, Supabase authenti
 New in this update:
 - Admin: Quick-create Lesson form on Admin Dashboard with Supabase Storage uploads (PDF/Video) or external link, resources array, and metadata persisted to lessons table.
 - HR: Assign-by-email form and Performance snapshot embedded in HR Dashboard, using Supabase tables (assignments, progress).
+- Employee: Self dashboard at /employee showing assigned lessons grouped by course, progress bar, and actions to update progress.
 
 Note: The legacy "Categories" sidebar and "Browse Courses" call-to-action on Home have been removed to simplify navigation.
 
@@ -239,6 +240,34 @@ create policy if not exists user_roles_self
 on public.user_roles for select
 to authenticated
 using (user_id = auth.uid());
+
+-- Employee Dashboard RLS examples (adjust to your schema)
+-- If assignments has employee_id referencing auth.users.id:
+create policy if not exists assignments_employee_select_self
+on public.assignments for select
+to authenticated
+using (employee_id = auth.uid());
+
+-- If progress links to assignments by assignment_id:
+create policy if not exists progress_select_self
+on public.progress for select
+to authenticated
+using (exists (select 1 from public.assignments a where a.id = assignment_id and a.employee_id = auth.uid()));
+
+create policy if not exists progress_upsert_self_by_assignment
+on public.progress for insert
+to authenticated
+with check (exists (select 1 from public.assignments a where a.id = assignment_id and a.employee_id = auth.uid()));
+
+create policy if not exists progress_update_self_by_assignment
+on public.progress for update
+to authenticated
+using (exists (select 1 from public.assignments a where a.id = assignment_id and a.employee_id = auth.uid()))
+with check (exists (select 1 from public.assignments a where a.id = assignment_id and a.employee_id = auth.uid()));
+
+-- Indexes recommended
+create unique index if not exists progress_assignment_id_unique on public.progress(assignment_id);
+create index if not exists assignments_employee_idx on public.assignments(employee_id);
 
 -- Optional: Storage public read (handled by bucket 'public' setting).
 -- If bucket isn't public, add storage policies (requires SQL via storage.objects).
