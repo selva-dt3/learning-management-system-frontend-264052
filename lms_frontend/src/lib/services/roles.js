@@ -19,7 +19,7 @@ function logRlsVisibilityHint(userId, data, error) {
   console.debug?.('[roles] query result', { count: Array.isArray(data) ? data.length : null, hasError: !!error, userId });
   if (error) {
     // eslint-disable-next-line no-console
-    console.error('[roles] RLS or schema error while reading user_roles. Returning [] to avoid blocking UI.');
+    console.error('[roles] RLS or schema error while reading public.user_roles. Returning [] to avoid blocking UI.');
   }
   if (!error && Array.isArray(data) && data.length === 0) {
     // eslint-disable-next-line no-console

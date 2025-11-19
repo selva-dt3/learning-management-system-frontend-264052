@@ -16,6 +16,8 @@ import { ensureTablesHint, findUserIdByEmail } from '../../lib/services/supabase
  * All operations are client-only via Supabase; shows clear policy/table errors.
  */
 export default function HRDashboard() {
+  // eslint-disable-next-line no-console
+  console.debug?.('[HRDashboard] render');
   const { user, role } = useAuth();
   const { notify } = useToast();
 

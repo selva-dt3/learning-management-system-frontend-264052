@@ -17,6 +17,8 @@ import { seedDemoData } from '../../lib/services/seeding';
  *   Uses idempotent UPSERTs. Shows actionable errors if schema missing or RLS blocks.
  */
 export default function AdminDashboard() {
+  // eslint-disable-next-line no-console
+  console.debug?.('[AdminDashboard] render');
   const { user, role } = useAuth();
   const { notify } = useToast();
   const isAdmin = role === 'admin' || role === 'superadmin';

@@ -307,7 +307,7 @@ export function RoleProtectedRoute({ children, allowedRoles = [] }) {
    * Authenticated but unauthorized users see a friendly 403 message.
    * Waits for roles to finish loading to avoid race condition.
    */
-  const { session, role, loading, rolesLoading } = useAuth();
+  const { session, role, roles, loading, rolesLoading } = useAuth();
   const location = useLocation();
 
   // eslint-disable-next-line no-console
@@ -318,6 +318,7 @@ export function RoleProtectedRoute({ children, allowedRoles = [] }) {
     rolesLoading,
     hasSession: !!session,
     role,
+    roles,
   });
 
   if (loading || rolesLoading) {
@@ -330,6 +331,12 @@ export function RoleProtectedRoute({ children, allowedRoles = [] }) {
     // eslint-disable-next-line no-console
     console.warn('[RouteGuard] no session, redirecting to /auth/login');
     return <Navigate to="/auth/login" replace state={{ from: location }} />;
+  }
+
+  // If roles are empty after loading (possibly due to RLS), show AccessDenied instead of hanging
+  if (Array.isArray(roles) && roles.length === 0 && allowedRoles.length > 0) {
+    console.warn('[RouteGuard] roles empty after load (RLS?), denying access gracefully');
+    return <AccessDenied message="Your account does not have the required role for this area." />;
   }
 
   const hasAccess = allowedRoles.length === 0 || allowedRoles.includes(role);
